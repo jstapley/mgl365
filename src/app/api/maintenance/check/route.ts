@@ -2,13 +2,12 @@ import { NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // Protect this endpoint with a secret so only your cron job can call it.
 // Set CRON_SECRET in .env.local and pass it as ?secret=xxx
-const CRON_SECRET = process.env.CRON_SECRET
 
 export async function GET(request: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const CRON_SECRET = process.env.CRON_SECRET
   const { searchParams } = new URL(request.url)
 
   if (CRON_SECRET && searchParams.get('secret') !== CRON_SECRET) {
