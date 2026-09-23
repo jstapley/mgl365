@@ -43,7 +43,7 @@ async function getUpcomingMaintenance(): Promise<MaintenanceItem[]> {
     .lte('next_due', in7DaysStr)
     .order('next_due', { ascending: true })
 
-  return (data ?? []) as MaintenanceItem[]
+  return (data ?? []) as unknown as MaintenanceItem[]
 }
 
 const cards = [
