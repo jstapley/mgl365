@@ -1,72 +1,92 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { Bed, Users } from 'lucide-react'
+import { getServiceSupabase } from '@/lib/supabase'
+import type { Villa } from '@/types'
 
-const villas = [
-  {
-    name: 'Cool House',
-    slug: 'cool-house',
-    image: '/images/villas/cool-house.jpg',
-    description:
-      'Escape to the ultimate Caribbean getaway at CooL HouSe, a stunning 5-bedroom island retreat that perfectly blends modern elegance with relaxed island living. Every detail has been thoughtfully designed, from premium finishes to expansive living spaces, making it one of the true gems of Antigua\'s beautiful western cape.',
-  },
-  {
-    name: 'Starfish House Lower',
-    slug: 'starfish-house-lower',
-    image: '/images/villas/starfish-house-lower.jpg',
-    description:
-      'Your next dream vacation is waiting here at Starfish House, a tranquil seaside retreat on Antigua\'s west coast in Ffryes Estate, St. Mary\'s. Designed for luxurious, relaxed living with breathtaking ocean vistas, this home captures the very essence of island escape. From the entire front façade of the property, you\'re greeted by sweeping, unobstructed views of the Caribbean Sea and Valley Church Beach.',
-  },
-  {
-    name: 'Starfish House Upper',
-    slug: 'starfish-house-upper',
-    image: '/images/villas/starfish-house-upper.jpg',
-    description:
-      'Wake up to breathtaking ocean views, sip coffee on your private balcony, and unwind in a breezy island retreat just minutes from Antigua\'s best beaches and Jolly Harbour. Perched on the west coast of Antigua in Ffryes Estate, St. Mary\'s, Starfish House is a private one-bedroom hideaway designed for relaxed island living.',
-  },
-  {
-    name: 'Water Edge',
-    slug: 'water-edge',
-    image: '/images/villas/water-edge.jpg',
-    description:
-      'Set directly along the pristine white sands of Jolly Harbour, Villa Water\'s Edge (also known as Marina House) is a coastal gem that combines refined elegance with relaxed seaside living. With four beautifully appointed bedrooms, this villa comfortably hosts up to eight guests — making it ideal for families or groups seeking a peaceful, upscale escape.',
-  },
-]
+async function getVillas(): Promise<Villa[]> {
+  const supabase = getServiceSupabase()
+  const { data, error } = await supabase
+    .from('villas')
+    .select('*')
+    .eq('active', true)
+    .order('created_at', { ascending: true })
+  if (error) console.error('Error fetching villas:', error)
+  return data ?? []
+}
 
-export default function VillasSection() {
+export default async function VillasSection() {
+  const villas = await getVillas()
+
   return (
     <section className="bg-white py-16">
       <div className="mx-auto max-w-[1170px] px-6">
-        <h2 className="mb-12 text-center font-[var(--font-playfair)] text-5xl text-[#000321]">
+        <h2 className="mb-2 text-center font-[var(--font-playfair)] text-4xl md:text-5xl text-[#000321]">
           Our Villas
         </h2>
+        <div className="mx-auto mb-12 h-px w-16 bg-[#1f5772]" />
 
-        <div className="grid grid-cols-1 gap-x-12 gap-y-16 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {villas.map((villa) => (
-            <div key={villa.slug} className="flex flex-col items-center text-center">
-              <h3 className="mb-4 font-[var(--font-playfair)] text-2xl text-[#000321]">
-                {villa.name}
-              </h3>
-
-              <div className="relative mb-5 h-[300px] w-full overflow-hidden rounded">
+            <Link
+              key={villa.id}
+              href={`/our-villas/${villa.slug}`}
+              className="group block overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
+              {/* Image */}
+              <div className="relative h-[280px] overflow-hidden">
                 <Image
-                  src={villa.image}
+                  src={villa.image_url || '/images/villa-placeholder.jpg'}
                   alt={villa.name}
                   fill
-                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1f5772]" />
               </div>
 
-              <p className="mb-6 max-w-prose text-sm leading-7 text-gray-600">
-                {villa.description}
-              </p>
+              {/* Content */}
+              <div className="flex flex-col p-6">
+                <h3 className="mb-2 font-[var(--font-playfair)] text-2xl text-[#000321] transition-colors group-hover:text-[#1f5772]">
+                  {villa.name}
+                </h3>
 
-              <Link
-                href={`/our-villas/${villa.slug}`}
-                className="inline-block bg-[#1f5772] px-10 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:bg-[#174560]"
-              >
-                More Details
-              </Link>
-            </div>
+                {/* Specs */}
+                <div className="mb-3 flex flex-wrap gap-4 text-sm text-gray-500">
+                  {villa.bedrooms != null && (
+                    <span className="flex items-center gap-1.5">
+                      <Bed size={13} className="text-[#1f5772]" />
+                      {villa.bedrooms} bedroom{villa.bedrooms !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {villa.max_guests != null && (
+                    <span className="flex items-center gap-1.5">
+                      <Users size={13} className="text-[#1f5772]" />
+                      Up to {villa.max_guests} guests
+                    </span>
+                  )}
+                </div>
+
+                {villa.price_per_night != null && (
+                  <p className="mb-3 text-lg font-semibold text-[#1f5772]">
+                    From ${villa.price_per_night.toLocaleString()}
+                    <span className="text-sm font-normal text-gray-400"> / night</span>
+                  </p>
+                )}
+
+                {villa.description && (
+                  <p className="mb-5 line-clamp-3 text-sm leading-6 text-gray-500">
+                    {villa.description}
+                  </p>
+                )}
+
+                <div className="mt-auto border-t border-gray-100 pt-4">
+                  <div className="block w-full bg-[#1f5772] py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-white transition-colors group-hover:bg-[#174560]">
+                    More Details
+                  </div>
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>

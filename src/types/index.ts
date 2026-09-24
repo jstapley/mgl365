@@ -15,16 +15,24 @@ export interface ApiResponse<T = null> {
 
 // ─── Database types ───────────────────────────────────────────────────────────
 
+export type VillaSection =
+  | { type: 'text';    heading: string; body: string }
+  | { type: 'bullets'; heading: string; items: string[] }
+
 export interface Villa {
   id: string
   name: string
   slug: string
   description: string | null
+  tagline: string | null
   image_url: string | null
   bedrooms: number | null
   max_guests: number | null
   price_per_night: number | null
   active: boolean
+  features: string[]
+  gallery_images: string[]
+  content: VillaSection[] | null
   created_at: string
   updated_at: string
 }
