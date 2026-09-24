@@ -31,7 +31,7 @@ const services = [
 
 export default function ConciergeSection() {
   return (
-    <section className="bg-[#F6F6FF] py-16">
+    <section id="concierge" className="scroll-mt-16 bg-[#F6F6FF] py-16">
       <div className="mx-auto max-w-[1170px] px-6">
         <h2 className="mb-12 text-center font-[var(--font-playfair)] text-5xl text-[#000321]">
           Concierge Services

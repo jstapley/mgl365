@@ -14,8 +14,8 @@ export default function HomePage() {
       <ImageSlider />
       <VillasSection />
       <AboutSection />
-      <PackagesSection />
       <ConciergeSection />
+      <PackagesSection />
       <FaqSection />
       <TestimonialsSection />
     </>

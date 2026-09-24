@@ -8,7 +8,7 @@ import { Menu, X, Phone, ChevronDown } from 'lucide-react'
 interface VillaLink { name: string; slug: string }
 
 const staticLinks = [
-  { href: '/concierge-services', label: 'Concierge Services' },
+  { href: '/#concierge', label: 'Concierge Services' },
   { href: '/#about', label: 'About Us' },
   { href: '/#faqs', label: 'FAQs' },
   { href: '/#testimonials', label: 'Testimonials' },
