@@ -43,8 +43,12 @@ const packages = [
 
 export default function PackagesSection() {
   return (
-    <section className="bg-[#F6F6FF] py-16">
+    <section id="packages" className="scroll-mt-16 bg-[#F6F6FF] py-16">
       <div className="mx-auto max-w-[1170px] px-6">
+        <h2 className="mb-2 text-center font-[var(--font-playfair)] text-5xl text-[#000321]">
+          Our Packages
+        </h2>
+        <div className="mx-auto mb-12 h-px w-16 bg-[#1f5772]" />
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {packages.map((pkg) => (
             <div

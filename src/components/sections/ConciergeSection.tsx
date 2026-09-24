@@ -56,7 +56,7 @@ export default function ConciergeSection() {
 
         <div className="text-center">
           <Link
-            href="/concierge-services"
+            href="/#packages"
             className="inline-block bg-[#1f5772] px-10 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:bg-[#174560]"
           >
             View Our Packages
