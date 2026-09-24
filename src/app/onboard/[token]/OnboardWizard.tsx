@@ -110,6 +110,13 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
     Record<string, { selected: boolean; notes: string }>
   >({})
 
+  // Wine selection notes
+  const [wineNotes, setWineNotes] = useState('')
+
+  // Chef special event
+  const [chefSpecialEvent, setChefSpecialEvent] = useState(false)
+  const [chefSpecialEventDesc, setChefSpecialEventDesc] = useState('')
+
   // Final step
   const [guestNotes, setGuestNotes] = useState('')
 
@@ -187,6 +194,11 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
         }
       }
 
+      if (wineNotes) fd.append('wine_notes', wineNotes)
+      if (chefSpecialEvent) {
+        fd.append('chef_special_event', 'on')
+        if (chefSpecialEventDesc) fd.append('chef_special_event_desc', chefSpecialEventDesc)
+      }
       fd.append('guest_notes', guestNotes)
       await submitOnboarding(token, fd)
     })
@@ -432,12 +444,99 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                     </div>
                   )
                 })}
+
+                {/* Chef: Special Event option */}
+                {currentService.interestKey === 'interest_chef' && (
+                  <div className={`rounded-lg border p-3 transition-colors ${
+                    chefSpecialEvent ? 'border-[#1f5772]/30 bg-[#1f5772]/5' : 'border-gray-200'
+                  }`}>
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={chefSpecialEvent}
+                        onChange={() => setChefSpecialEvent(v => !v)}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#1f5772]"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium text-gray-900">Special Event</span>
+                        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                          Planning a celebration, private dinner, or other special occasion? Let us know and we&apos;ll provide a custom quote.
+                        </p>
+                      </div>
+                    </label>
+                    {chefSpecialEvent && (
+                      <div className="mt-2 pl-7">
+                        <textarea
+                          value={chefSpecialEventDesc}
+                          onChange={(e) => setChefSpecialEventDesc(e.target.value)}
+                          rows={3}
+                          placeholder="Please describe your event — occasion, number of guests, preferred date, cuisine preferences, etc."
+                          className="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#1f5772] placeholder:text-gray-400"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Shown when Yes is selected but no activities configured for this category yet */}
-          {currentInterest === true && currentActivities.length === 0 && (
+          {/* Chef: Special Event when no other activities configured */}
+          {currentInterest === true && currentActivities.length === 0 && currentService.interestKey === 'interest_chef' && (
+            <div className="rounded-lg border border-[#1f5772]/20 bg-white p-6">
+              <h3 className="mb-4 text-sm font-semibold text-gray-700">Select any you&apos;d like to book:</h3>
+              <div className={`rounded-lg border p-3 transition-colors ${
+                chefSpecialEvent ? 'border-[#1f5772]/30 bg-[#1f5772]/5' : 'border-gray-200'
+              }`}>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={chefSpecialEvent}
+                    onChange={() => setChefSpecialEvent(v => !v)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#1f5772]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-medium text-gray-900">Special Event</span>
+                    <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                      Planning a celebration, private dinner, or other special occasion? Let us know and we&apos;ll provide a custom quote.
+                    </p>
+                  </div>
+                </label>
+                {chefSpecialEvent && (
+                  <div className="mt-2 pl-7">
+                    <textarea
+                      value={chefSpecialEventDesc}
+                      onChange={(e) => setChefSpecialEventDesc(e.target.value)}
+                      rows={3}
+                      placeholder="Please describe your event — occasion, number of guests, preferred date, cuisine preferences, etc."
+                      className="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#1f5772] placeholder:text-gray-400"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Wine: selection textarea */}
+          {currentInterest === true && currentService.interestKey === 'interest_wine' && (
+            <div className="rounded-lg border border-[#1f5772]/20 bg-white p-6">
+              <p className="mb-3 text-sm text-[#1f5772]">
+                Please review the wine list from your welcome package and let us know your preferred selection and quantity below.
+              </p>
+              <textarea
+                value={wineNotes}
+                onChange={(e) => setWineNotes(e.target.value)}
+                rows={4}
+                placeholder="e.g. 2x Sauvignon Blanc, 1x Malbec, 1x Rosé…"
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772] placeholder:text-gray-400"
+              />
+            </div>
+          )}
+
+          {/* Fallback for other categories with no activities */}
+          {currentInterest === true && currentActivities.length === 0
+            && currentService.interestKey !== 'interest_wine'
+            && currentService.interestKey !== 'interest_chef' && (
             <div className="rounded-lg border border-[#1f5772]/20 bg-[#1f5772]/5 p-4 text-sm text-[#1f5772]">
               Your property manager will follow up with {currentService.label.toLowerCase()} details and availability.
             </div>
