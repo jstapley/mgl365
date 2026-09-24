@@ -2,7 +2,7 @@ import Image from 'next/image'
 
 export default function AboutSection() {
   return (
-    <section className="bg-[#F6F6FF] py-16">
+    <section id="about" className="bg-[#F6F6FF] py-16">
       <div className="mx-auto flex max-w-[1170px] flex-col items-center gap-12 px-6 md:flex-row">
         {/* Image */}
         <div className="relative h-[520px] w-full shrink-0 md:w-[450px] bg-[#F6F6FF]">

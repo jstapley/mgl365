@@ -9,9 +9,9 @@ interface VillaLink { name: string; slug: string }
 
 const staticLinks = [
   { href: '/concierge-services', label: 'Concierge Services' },
-  { href: '/about', label: 'About Us' },
-  { href: '/faqs', label: 'FAQs' },
-  { href: '/testimonials', label: 'Testimonials' },
+  { href: '/#about', label: 'About Us' },
+  { href: '/#faqs', label: 'FAQs' },
+  { href: '/#testimonials', label: 'Testimonials' },
   { href: '/contact', label: 'Contact Us' },
 ]
 

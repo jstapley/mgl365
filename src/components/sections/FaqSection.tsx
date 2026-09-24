@@ -50,7 +50,7 @@ export default function FaqSection() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section className="bg-white py-16">
+    <section id="faqs" className="bg-white py-16">
       <div className="mx-auto max-w-[900px] px-6">
         <h2 className="mb-4 text-center font-[var(--font-playfair)] text-5xl text-[#000321]">
           Frequently Asked Questions
