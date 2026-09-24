@@ -7,6 +7,8 @@ import ConciergeSection from '@/components/sections/ConciergeSection'
 import FaqSection from '@/components/sections/FaqSection'
 import TestimonialsSection from '@/components/sections/TestimonialsSection'
 
+export const revalidate = 0
+
 export default function HomePage() {
   return (
     <>

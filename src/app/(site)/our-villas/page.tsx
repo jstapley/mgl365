@@ -4,6 +4,8 @@ import { Bed, Users } from 'lucide-react'
 import { getServiceSupabase } from '@/lib/supabase'
 import type { Villa } from '@/types'
 
+export const revalidate = 0
+
 export const metadata = {
   title: 'Our Villas | MGL 365 Management',
   description: 'Explore our collection of premium villa rentals in Antigua.',
