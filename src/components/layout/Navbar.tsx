@@ -35,7 +35,7 @@ export default function Navbar({ villas = [] }: { villas?: VillaLink[] }) {
   }, [])
 
   return (
-    <header className="w-full bg-[#1f5772]">
+    <header className="sticky top-0 z-50 w-full bg-[#1f5772]">
       <div className="mx-auto flex max-w-[1170px] items-center justify-between px-6 py-3">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center gap-2">

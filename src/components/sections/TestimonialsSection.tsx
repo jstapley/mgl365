@@ -33,7 +33,7 @@ function Stars({ count }: { count: number }) {
 
 export default function TestimonialsSection() {
   return (
-    <section id="testimonials" className="bg-[#F6F6FF] py-16">
+    <section id="testimonials" className="scroll-mt-16 bg-[#F6F6FF] py-16">
       <div className="mx-auto max-w-[1170px] px-6">
         <h2 className="mb-12 text-center font-[var(--font-playfair)] text-5xl text-[#000321]">
           Our Clients Say
