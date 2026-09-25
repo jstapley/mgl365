@@ -116,6 +116,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
 
   // Provisioning checklist
   const [groceryItems, setGroceryItems] = useState<Record<string, boolean>>({})
+  const [groceryCategoryNotes, setGroceryCategoryNotes] = useState<Record<string, string>>({})
   const [groceryNotes, setGroceryNotes] = useState('')
   function toggleGrocery(key: string) {
     setGroceryItems(prev => ({ ...prev, [key]: !prev[key] }))
@@ -209,7 +210,11 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
       if (carInsurance !== null) fd.append('car_insurance', carInsurance ? 'yes' : 'no')
       const selectedGroceries = Object.entries(groceryItems).filter(([,v]) => v).map(([k]) => k)
       if (selectedGroceries.length) fd.append('grocery_items', selectedGroceries.join(', '))
-      if (groceryNotes) fd.append('grocery_notes', groceryNotes)
+      const categoryNoteLines = Object.entries(groceryCategoryNotes)
+        .filter(([, v]) => v.trim())
+        .map(([k, v]) => `[${k}] ${v.trim()}`)
+      const allGroceryNotes = [...categoryNoteLines, groceryNotes.trim()].filter(Boolean).join('\n')
+      if (allGroceryNotes) fd.append('grocery_notes', allGroceryNotes)
       if (wineNotes) fd.append('wine_notes', wineNotes)
       if (chefSpecialEvent) {
         fd.append('chef_special_event', 'on')
@@ -607,15 +612,15 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                   emoji: '🥐', label: 'Breakfast Essentials', items: [
                     'Eggs (½ dozen / 1 dozen)', 'Milk (Whole / Skim / Almond / Oat)',
                     'Bread (White / Whole Wheat / Gluten-Free)', 'Butter / Margarine',
-                    'Cheese (Cheddar / Mozzarella / Other)', 'Bacon / Sausage',
+                    'Cheese (Cheddar / Mozzarella / Other)', 'Bacon', 'Sausage',
                     'Yogurt (Plain / Flavored)', 'Fresh Fruit (Bananas / Apples / Oranges / Mixed)',
                     'Cereal / Granola', 'Coffee (Ground / Pods)', 'Tea',
                   ],
                 },
                 {
                   emoji: '🥗', label: 'Lunch & Dinner Basics', items: [
-                    'Chicken (Breasts / Thighs / Whole)', 'Fish / Shrimp',
-                    'Ground Beef / Steak / Pork', 'Rice', 'Pasta + Sauce', 'Potatoes',
+                    'Chicken (Breasts / Thighs / Whole)', 'Fish', 'Shrimp',
+                    'Ground Beef', 'Steak', 'Pork', 'Rice', 'Pasta + Sauce', 'Potatoes',
                     'Salad Greens', 'Vegetables (Carrots / Broccoli / Peppers / Mixed)',
                     'Olive Oil / Cooking Oil', 'Salt / Pepper / Seasonings',
                   ],
@@ -629,7 +634,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                 },
                 {
                   emoji: '🍿', label: 'Snacks & Extras', items: [
-                    'Chips / Crackers', 'Nuts / Dried Fruit', 'Chocolate / Candy',
+                    'Chips', 'Crackers', 'Nuts / Dried Fruit', 'Chocolate', 'Candy',
                     'Jam / Honey / Peanut Butter', 'Condiments (Ketchup / Mayo / Mustard)',
                     'Sunscreen', 'Insect Repellent',
                   ],
@@ -651,6 +656,15 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                         <span className="text-sm text-gray-700">{item}</span>
                       </label>
                     ))}
+                  </div>
+                  <div className="mt-3">
+                    <textarea
+                      value={groceryCategoryNotes[label] ?? ''}
+                      onChange={(e) => setGroceryCategoryNotes(prev => ({ ...prev, [label]: e.target.value }))}
+                      rows={2}
+                      placeholder={`Any notes for ${label.toLowerCase()}…`}
+                      className="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#1f5772] placeholder:text-gray-400"
+                    />
                   </div>
                   <div className="mt-4 border-t border-gray-100" />
                 </div>

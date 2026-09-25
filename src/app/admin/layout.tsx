@@ -1,5 +1,7 @@
 import AdminNav from '@/components/admin/AdminNav'
 
+export const revalidate = 0
+
 export const metadata = { title: 'MGL 365 Admin' }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
