@@ -593,7 +593,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                 value={wineNotes}
                 onChange={(e) => setWineNotes(e.target.value)}
                 rows={4}
-                placeholder="e.g. 2x Sauvignon Blanc, 1x Malbec, 1x Rosé…"
+                placeholder="Please indicate exactly which bottle of wine you would like to order, along with any codes and the quantity of each."
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772] placeholder:text-gray-400"
               />
             </div>
