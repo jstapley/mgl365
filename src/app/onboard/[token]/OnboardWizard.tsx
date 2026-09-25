@@ -114,6 +114,13 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
   // Transport car insurance
   const [carInsurance, setCarInsurance] = useState<boolean | null>(null)
 
+  // Provisioning checklist
+  const [groceryItems, setGroceryItems] = useState<Record<string, boolean>>({})
+  const [groceryNotes, setGroceryNotes] = useState('')
+  function toggleGrocery(key: string) {
+    setGroceryItems(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
   // Wine selection notes
   const [wineNotes, setWineNotes] = useState('')
 
@@ -200,6 +207,9 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
       }
 
       if (carInsurance !== null) fd.append('car_insurance', carInsurance ? 'yes' : 'no')
+      const selectedGroceries = Object.entries(groceryItems).filter(([,v]) => v).map(([k]) => k)
+      if (selectedGroceries.length) fd.append('grocery_items', selectedGroceries.join(', '))
+      if (groceryNotes) fd.append('grocery_notes', groceryNotes)
       if (wineNotes) fd.append('wine_notes', wineNotes)
       if (chefSpecialEvent) {
         fd.append('chef_special_event', 'on')
@@ -589,10 +599,83 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
             </div>
           )}
 
+          {/* Provisioning: grocery checklist */}
+          {currentInterest === true && currentService.interestKey === 'interest_provisioning' && (
+            <div className="rounded-lg border border-[#1f5772]/20 bg-white p-6 space-y-6">
+              {[
+                {
+                  emoji: '🥐', label: 'Breakfast Essentials', items: [
+                    'Eggs (½ dozen / 1 dozen)', 'Milk (Whole / Skim / Almond / Oat)',
+                    'Bread (White / Whole Wheat / Gluten-Free)', 'Butter / Margarine',
+                    'Cheese (Cheddar / Mozzarella / Other)', 'Bacon / Sausage',
+                    'Yogurt (Plain / Flavored)', 'Fresh Fruit (Bananas / Apples / Oranges / Mixed)',
+                    'Cereal / Granola', 'Coffee (Ground / Pods)', 'Tea',
+                  ],
+                },
+                {
+                  emoji: '🥗', label: 'Lunch & Dinner Basics', items: [
+                    'Chicken (Breasts / Thighs / Whole)', 'Fish / Shrimp',
+                    'Ground Beef / Steak / Pork', 'Rice', 'Pasta + Sauce', 'Potatoes',
+                    'Salad Greens', 'Vegetables (Carrots / Broccoli / Peppers / Mixed)',
+                    'Olive Oil / Cooking Oil', 'Salt / Pepper / Seasonings',
+                  ],
+                },
+                {
+                  emoji: '🥤', label: 'Drinks & Beverages', items: [
+                    'Water (Still / Sparkling)', 'Juice (Orange / Apple / Other)',
+                    'Sodas / Soft Drinks', 'Beer', 'Rum / Spirits',
+                    'Ice',
+                  ],
+                },
+                {
+                  emoji: '🍿', label: 'Snacks & Extras', items: [
+                    'Chips / Crackers', 'Nuts / Dried Fruit', 'Chocolate / Candy',
+                    'Jam / Honey / Peanut Butter', 'Condiments (Ketchup / Mayo / Mustard)',
+                    'Sunscreen', 'Insect Repellent',
+                  ],
+                },
+              ].map(({ emoji, label, items }) => (
+                <div key={label}>
+                  <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                    <span>{emoji}</span> {label}
+                  </p>
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <label key={item} className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={groceryItems[item] ?? false}
+                          onChange={() => toggleGrocery(item)}
+                          className="h-4 w-4 rounded border-gray-300 accent-[#1f5772]"
+                        />
+                        <span className="text-sm text-gray-700">{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-4 border-t border-gray-100" />
+                </div>
+              ))}
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  Special Requests / Additional Items
+                </label>
+                <textarea
+                  value={groceryNotes}
+                  onChange={(e) => setGroceryNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Any dietary requirements, specific brands, baby food, or other items not listed above…"
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772] placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Fallback for other categories with no activities */}
           {currentInterest === true && currentActivities.length === 0
             && currentService.interestKey !== 'interest_wine'
-            && currentService.interestKey !== 'interest_chef' && (
+            && currentService.interestKey !== 'interest_chef'
+            && currentService.interestKey !== 'interest_provisioning' && (
             <div className="rounded-lg border border-[#1f5772]/20 bg-[#1f5772]/5 p-4 text-sm text-[#1f5772]">
               Your property manager will follow up with {currentService.label.toLowerCase()} details and availability.
             </div>
