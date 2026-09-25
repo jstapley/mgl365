@@ -58,6 +58,7 @@ export async function submitOnboarding(token: string, formData: FormData) {
       arrival_datetime: (formData.get('arrival_datetime') as string) || null,
       departure_flight: (formData.get('departure_flight') as string)?.trim() || null,
       departure_datetime: (formData.get('departure_datetime') as string) || null,
+      car_insurance: (formData.get('car_insurance') as string) || null,
       guest_notes: (formData.get('guest_notes') as string)?.trim() || null,
       submitted_at: new Date().toISOString(),
     },

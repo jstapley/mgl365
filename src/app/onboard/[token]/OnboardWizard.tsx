@@ -111,6 +111,9 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
     Record<string, { selected: boolean; notes: string }>
   >({})
 
+  // Transport car insurance
+  const [carInsurance, setCarInsurance] = useState<boolean | null>(null)
+
   // Wine selection notes
   const [wineNotes, setWineNotes] = useState('')
 
@@ -196,6 +199,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
         }
       }
 
+      if (carInsurance !== null) fd.append('car_insurance', carInsurance ? 'yes' : 'no')
       if (wineNotes) fd.append('wine_notes', wineNotes)
       if (chefSpecialEvent) {
         fd.append('chef_special_event', 'on')
@@ -530,6 +534,42 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Transport: car insurance */}
+          {currentInterest === true && currentService.interestKey === 'interest_transport' && (
+            <div className="rounded-lg border border-[#1f5772]/20 bg-white p-6">
+              <p className="mb-3 text-sm font-semibold text-gray-700">Optional Car Insurance</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCarInsurance(true)}
+                  className={`flex-1 rounded-lg border-2 py-3 text-sm font-semibold transition-colors ${
+                    carInsurance === true
+                      ? 'border-[#1f5772] bg-[#1f5772] text-white'
+                      : 'border-gray-200 text-gray-700 hover:border-[#1f5772]/50'
+                  }`}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCarInsurance(false)}
+                  className={`flex-1 rounded-lg border-2 py-3 text-sm font-semibold transition-colors ${
+                    carInsurance === false
+                      ? 'border-gray-400 bg-gray-100 text-gray-700'
+                      : 'border-gray-200 text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+              {carInsurance === true && (
+                <p className="mt-3 rounded bg-[#1f5772]/5 px-4 py-2.5 text-xs text-[#1f5772]">
+                  Great — we will get you a quote for car insurance and include it with your transport details.
+                </p>
+              )}
             </div>
           )}
 
