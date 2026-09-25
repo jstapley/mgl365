@@ -89,6 +89,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
 
   // Step 0 fields
   const [numGuests, setNumGuests] = useState('')
+  const [numGuestsUnder6, setNumGuestsUnder6] = useState('')
   const [arrivalFlight, setArrivalFlight] = useState('')
   const [arrivalDatetime, setArrivalDatetime] = useState('')
   const [departureFlight, setDepartureFlight] = useState('')
@@ -170,6 +171,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
     startTransition(async () => {
       const fd = new FormData()
       if (numGuests) fd.append('num_guests', numGuests)
+      if (numGuestsUnder6) fd.append('num_guests_under_6', numGuestsUnder6)
       fd.append('arrival_flight', arrivalFlight)
       if (arrivalDatetime) fd.append('arrival_datetime', arrivalDatetime)
       fd.append('departure_flight', departureFlight)
@@ -283,7 +285,21 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
                   placeholder="e.g. 4"
                 />
               </div>
-              <div />
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">
+                  Guests under age 6
+                  <span className="ml-1 font-normal text-gray-400">(for tax purposes)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={numGuestsUnder6}
+                  onChange={(e) => setNumGuestsUnder6(e.target.value)}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+                  placeholder="e.g. 0"
+                />
+              </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-700">
                   Arrival flight

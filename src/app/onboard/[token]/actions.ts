@@ -53,6 +53,7 @@ export async function submitOnboarding(token: string, formData: FormData) {
       interest_provisioning: formData.get('interest_provisioning') === 'on',
       selected_activities: selectedActivities,
       num_guests: formData.get('num_guests') ? Number(formData.get('num_guests')) : null,
+      num_guests_under_6: formData.get('num_guests_under_6') ? Number(formData.get('num_guests_under_6')) : null,
       arrival_flight: (formData.get('arrival_flight') as string)?.trim() || null,
       arrival_datetime: (formData.get('arrival_datetime') as string) || null,
       departure_flight: (formData.get('departure_flight') as string)?.trim() || null,
