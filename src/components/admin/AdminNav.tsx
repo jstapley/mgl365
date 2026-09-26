@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList, MailOpen } from 'lucide-react'
 import { logout } from '@/app/admin/actions'
 
 const links = [
@@ -16,7 +16,8 @@ const links = [
   { href: '/admin/activities',  label: 'Activities',        icon: Compass,         exact: false },
   { href: '/admin/contact',    label: 'Contact',            icon: Mail,            exact: false },
   { href: '/admin/maintenance', label: 'Maintenance',       icon: Wrench,          exact: false },
-  { href: '/admin/forms',      label: 'Forms',             icon: ClipboardList,   exact: false },
+  { href: '/admin/forms',           label: 'Forms',            icon: ClipboardList, exact: false },
+  { href: '/admin/email-templates', label: 'Email Templates',  icon: MailOpen,      exact: false },
 ]
 
 export default function AdminNav() {
