@@ -15,7 +15,7 @@ function applyTemplate(template: string, vars: Record<string, string>) {
   )
 }
 
-async function sendBookingEmail(bookingId: string) {
+async function sendBookingEmail(bookingId: string): Promise<string> {
   const supabase = getServiceSupabase()
 
   // Fetch template
@@ -25,8 +25,8 @@ async function sendBookingEmail(bookingId: string) {
     .eq('trigger', 'booking_pending')
     .eq('active', true)
     .single()
-  if (tmplError) { console.error('[sendBookingEmail] template fetch error:', tmplError.message); return }
-  if (!tmpl) { console.error('[sendBookingEmail] no active booking_pending template found'); return }
+  if (tmplError) return `Template fetch error: ${tmplError.message}`
+  if (!tmpl) return 'No active booking_pending template found'
 
   // Fetch booking with villa + client
   const { data: booking, error: bookingError } = await supabase
@@ -34,12 +34,12 @@ async function sendBookingEmail(bookingId: string) {
     .select('id, check_in, check_out, onboarding_token, villas(name), clients(name, email)')
     .eq('id', bookingId)
     .single()
-  if (bookingError) { console.error('[sendBookingEmail] booking fetch error:', bookingError.message); return }
-  if (!booking) { console.error('[sendBookingEmail] booking not found:', bookingId); return }
+  if (bookingError) return `Booking fetch error: ${bookingError.message}`
+  if (!booking) return `Booking not found: ${bookingId}`
 
   const client = (booking as any).clients
   const villaName = (booking as any).villas?.name ?? 'your villa'
-  if (!client?.email) { console.error('[sendBookingEmail] client has no email for booking:', bookingId); return }
+  if (!client?.email) return `Client has no email address`
 
   const bookingLink = booking.onboarding_token
     ? `https://www.mgl365antigua.com/onboard/${booking.onboarding_token}`
@@ -83,8 +83,8 @@ async function sendBookingEmail(bookingId: string) {
     subject,
     html: bodyHtml,
   })
-  if (emailError) console.error('[sendBookingEmail] resend error:', emailError)
-  else console.log('[sendBookingEmail] sent OK, id:', emailData?.id)
+  if (emailError) return `Resend error: ${JSON.stringify(emailError)}`
+  return `OK:${emailData?.id}`
 }
 
 async function checkOverlap(
@@ -145,7 +145,9 @@ export async function createBooking(
   // Send welcome email if status is pending
   const status = (formData.get('status') as string) || 'pending'
   if (status === 'pending' && newBooking?.id) {
-    await sendBookingEmail(newBooking.id).catch(console.error)
+    const result = await sendBookingEmail(newBooking.id).catch(String)
+    if (!result.startsWith('OK:')) console.error('[sendBookingEmail]', result)
+    else console.log('[sendBookingEmail] sent OK, id:', result.slice(3))
   }
 
   revalidatePath('/admin/bookings')
@@ -196,4 +198,10 @@ export async function updateBooking(
   if (error) return error.message
   revalidatePath('/admin/bookings')
   redirect('/admin/bookings')
+}
+
+export async function resendBookingEmail(id: string): Promise<string> {
+  const result = await sendBookingEmail(id).catch(String)
+  revalidatePath(`/admin/bookings/${id}`)
+  return result
 }
