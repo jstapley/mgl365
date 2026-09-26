@@ -2,6 +2,78 @@
 
 import { redirect } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+function applyTemplate(template: string, vars: Record<string, string>) {
+  return Object.entries(vars).reduce(
+    (str, [key, val]) => str.replaceAll(`{{${key}}}`, val),
+    template
+  )
+}
+
+async function sendOnboardingCompleteEmail(bookingId: string) {
+  const supabase = getServiceSupabase()
+
+  const { data: tmpl, error: tmplError } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('trigger', 'onboarding_complete')
+    .eq('active', true)
+    .single()
+  if (tmplError || !tmpl) return
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, check_in, check_out, villas(name), clients(name, email)')
+    .eq('id', bookingId)
+    .single()
+  if (!booking) return
+
+  const client = (booking as any).clients
+  const villaName = (booking as any).villas?.name ?? 'Unknown Villa'
+  const adminLink = `https://www.mgl365antigua.com/admin/bookings/${bookingId}`
+
+  const vars = {
+    guest_name: client?.name ?? '',
+    guest_first_name: (client?.name ?? '').split(' ')[0],
+    villa_name: villaName,
+    check_in: booking.check_in ? new Date(booking.check_in).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '',
+    check_out: booking.check_out ? new Date(booking.check_out).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '',
+    admin_link: adminLink,
+    guest_email: client?.email ?? '',
+  }
+
+  const subject = applyTemplate(tmpl.subject, vars)
+  const bodyText = applyTemplate(tmpl.body, vars)
+
+  const bodyHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; color: #333;">
+      <div style="background: #1c4f6a; padding: 24px 32px; margin-bottom: 24px;">
+        <p style="color: white; margin: 0; font-size: 18px; font-weight: 600;">MGL 365 Management</p>
+        <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">Onboarding Complete — ${villaName}</p>
+      </div>
+      <div style="padding: 0 32px 32px;">
+        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText.replace(adminLink, `<a href="${adminLink}" style="color: #1f5772;">${adminLink}</a>`)}</div>
+        <div style="margin-top: 32px; text-align: center;">
+          <a href="${adminLink}" style="display: inline-block; background: #1f5772; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
+            View Booking
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+
+  await resend.emails.send({
+    from: 'MGL 365 Management <info@mgl365antigua.com>',
+    to: 'mgl365management@gmail.com',
+    cc: 'jeff@stapleyinc.com',
+    replyTo: 'mgl365management@gmail.com',
+    subject,
+    html: bodyHtml,
+  })
+}
 
 export async function submitOnboarding(token: string, formData: FormData) {
   const supabase = getServiceSupabase()
@@ -73,11 +145,14 @@ export async function submitOnboarding(token: string, formData: FormData) {
 
   if (error) throw new Error(error.message)
 
-  // Mark booking as completed
+  // Mark booking confirmed and record completion timestamp
   await supabase
     .from('bookings')
-    .update({ onboarding_completed_at: new Date().toISOString() })
+    .update({ status: 'confirmed', onboarding_completed_at: new Date().toISOString() })
     .eq('id', booking.id)
+
+  // Notify management
+  await sendOnboardingCompleteEmail(booking.id).catch(console.error)
 
   redirect(`/onboard/${token}/success`)
 }

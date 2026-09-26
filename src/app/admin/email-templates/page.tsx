@@ -12,7 +12,8 @@ async function getTemplates() {
 }
 
 const TRIGGER_LABELS: Record<string, string> = {
-  booking_pending: 'New Booking (Pending)',
+  booking_pending:     'New Booking (Pending)',
+  onboarding_complete: 'Onboarding Complete',
 }
 
 export default async function EmailTemplatesPage() {
