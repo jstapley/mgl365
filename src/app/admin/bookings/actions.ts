@@ -19,25 +19,27 @@ async function sendBookingEmail(bookingId: string) {
   const supabase = getServiceSupabase()
 
   // Fetch template
-  const { data: tmpl } = await supabase
+  const { data: tmpl, error: tmplError } = await supabase
     .from('email_templates')
     .select('*')
     .eq('trigger', 'booking_pending')
     .eq('active', true)
     .single()
-  if (!tmpl) return
+  if (tmplError) { console.error('[sendBookingEmail] template fetch error:', tmplError.message); return }
+  if (!tmpl) { console.error('[sendBookingEmail] no active booking_pending template found'); return }
 
   // Fetch booking with villa + client
-  const { data: booking } = await supabase
+  const { data: booking, error: bookingError } = await supabase
     .from('bookings')
     .select('id, check_in, check_out, onboarding_token, villas(name), clients(name, email)')
     .eq('id', bookingId)
     .single()
-  if (!booking) return
+  if (bookingError) { console.error('[sendBookingEmail] booking fetch error:', bookingError.message); return }
+  if (!booking) { console.error('[sendBookingEmail] booking not found:', bookingId); return }
 
   const client = (booking as any).clients
   const villaName = (booking as any).villas?.name ?? 'your villa'
-  if (!client?.email) return
+  if (!client?.email) { console.error('[sendBookingEmail] client has no email for booking:', bookingId); return }
 
   const bookingLink = booking.onboarding_token
     ? `https://www.mgl365antigua.com/onboard/${booking.onboarding_token}`
@@ -73,7 +75,7 @@ async function sendBookingEmail(bookingId: string) {
     </div>
   `
 
-  await resend.emails.send({
+  const { data: emailData, error: emailError } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
     to: client.email,
     cc: 'mgl365management@gmail.com',
@@ -81,6 +83,8 @@ async function sendBookingEmail(bookingId: string) {
     subject,
     html: bodyHtml,
   })
+  if (emailError) console.error('[sendBookingEmail] resend error:', emailError)
+  else console.log('[sendBookingEmail] sent OK, id:', emailData?.id)
 }
 
 async function checkOverlap(
