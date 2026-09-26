@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: 'MGL 365 Management | Premium Villa Rentals in Antigua',
   description:
     'Premium villa rentals & property management in Antigua. Where homes are cared for and dreams come true.',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
