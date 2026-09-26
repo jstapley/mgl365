@@ -3,7 +3,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { updateBookingStatus } from '../actions'
 import BookingStatusBadge from '@/components/admin/BookingStatusBadge'
 import EditBookingForm from './EditBookingForm'
-import ResendEmailButton from './ResendEmailButton'
+import ResendEmailButtons from './ResendEmailButton'
 import type { Booking, Villa, Client, BookingStatus } from '@/types'
 import Link from 'next/link'
 
@@ -52,9 +52,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         Booking — {booking.client?.name ?? 'Unknown'}
       </h1>
 
-      {/* Email action */}
+      {/* Email actions */}
       <div className="mb-4">
-        <ResendEmailButton bookingId={id} />
+        <ResendEmailButtons bookingId={id} />
       </div>
 
       {/* Quick status update */}

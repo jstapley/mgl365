@@ -244,13 +244,19 @@ async function sendCompletedEmail(bookingId: string): Promise<string> {
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
     to: client.email,
-    cc: 'mgl365management@gmail.com',
+    cc: ['mgl365management@gmail.com', 'jeff@stapleyinc.com'],
     replyTo: 'mgl365management@gmail.com',
     subject,
     html: bodyHtml,
   })
   if (emailError) return `Resend error: ${JSON.stringify(emailError)}`
   return `OK:${emailData?.id}`
+}
+
+export async function resendCompletedEmail(id: string): Promise<string> {
+  const result = await sendCompletedEmail(id).catch(String)
+  revalidatePath(`/admin/bookings/${id}`)
+  return result
 }
 
 export async function updateBookingStatus(id: string, status: BookingStatus) {
