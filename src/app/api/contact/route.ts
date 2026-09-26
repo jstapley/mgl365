@@ -10,10 +10,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
   }
 
+  const REPLY_TO = 'jeff@stapleyinc.com'
+  const replySubject = encodeURIComponent(
+    subject ? `Re: ${subject} — ${name}` : `Re: Enquiry from ${name}`
+  )
+
   const { error } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
-    to: 'jeff@stapleyinc.com',
-    replyTo: email,
+    to: 'info@mgl365antigua.com',
+    cc: 'jeff@stapleyinc.com',
+    replyTo: REPLY_TO,
     subject: subject ? `[Contact] ${subject} — ${name}` : `[Contact] New enquiry from ${name}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; color: #333;">
@@ -49,8 +55,15 @@ export async function POST(req: NextRequest) {
             <p style="font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin: 0;">${message}</p>
           </div>
 
-          <div style="margin-top: 32px; padding: 16px; background: #f5f5f5; border-radius: 4px; font-size: 12px; color: #888;">
-            Reply directly to this email to respond to ${name}.
+          <div style="margin-top: 32px; text-align: center;">
+            <a href="mailto:${REPLY_TO}?subject=${replySubject}"
+               style="display: inline-block; background: #1f5772; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
+              Reply to this Enquiry
+            </a>
+          </div>
+
+          <div style="margin-top: 24px; padding: 16px; background: #f5f5f5; border-radius: 4px; font-size: 12px; color: #888; text-align: center;">
+            Replies will be sent to ${REPLY_TO}
           </div>
         </div>
       </div>
