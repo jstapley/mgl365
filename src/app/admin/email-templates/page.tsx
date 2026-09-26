@@ -14,6 +14,7 @@ async function getTemplates() {
 const TRIGGER_LABELS: Record<string, string> = {
   booking_pending:     'New Booking (Pending)',
   onboarding_complete: 'Onboarding Complete',
+  booking_completed:   'Booking Completed (Thank You)',
 }
 
 export default async function EmailTemplatesPage() {
@@ -71,7 +72,11 @@ export default async function EmailTemplatesPage() {
             ['{{villa_name}}', 'Villa name'],
             ['{{check_in}}', 'Check-in date'],
             ['{{check_out}}', 'Check-out date'],
+            ['{{nights}}', 'Number of nights (completed only)'],
             ['{{booking_link}}', 'Link to booking/onboarding form'],
+            ['{{google_review_link}}', 'Google review URL (completed only)'],
+            ['{{guest_email}}', 'Guest email (onboarding complete only)'],
+            ['{{admin_link}}', 'Admin booking link (onboarding complete only)'],
           ].map(([variable, desc]) => (
             <div key={variable} className="flex gap-2">
               <code className="font-mono text-[#1f5772]">{variable}</code>
