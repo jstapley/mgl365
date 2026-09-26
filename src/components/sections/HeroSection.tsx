@@ -8,7 +8,7 @@ export default function HeroSection() {
         style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
       >
         {/* Overlay card — centered in the image */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] max-w-[900px] min-w-[340px] shadow-2xl ring-1 ring-white/40 bg-[#1c4f6a]">
+        <div className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] max-w-[900px] min-w-[340px] shadow-2xl ring-1 ring-white/40 bg-[#1c4f6a]">
           <div className="px-4 sm:px-6 py-5 sm:py-6 text-center text-white">
 
             <h1 className="font-[var(--font-playfair)] text-[1.3rem] sm:text-[1.65rem] md:text-[1.9rem] font-semibold uppercase tracking-[0.04em] leading-[1.4]">
