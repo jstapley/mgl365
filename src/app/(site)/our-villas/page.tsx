@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Bed, Users } from 'lucide-react'
 import { getServiceSupabase } from '@/lib/supabase'
+import JsonLd from '@/components/JsonLd'
 import type { Villa } from '@/types'
 
 export const revalidate = 0
@@ -26,6 +27,19 @@ export default async function OurVillasPage() {
 
   return (
     <div className="bg-white">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Our Villas — MGL 365 Management',
+        description: 'Explore our collection of premium villa rentals in Antigua.',
+        url: 'https://www.mgl365antigua.com/our-villas',
+        itemListElement: villas.map((villa, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: villa.name,
+          url: `https://www.mgl365antigua.com/our-villas/${villa.slug}`,
+        })),
+      }} />
       {/* Page header */}
       <div className="bg-[#1c4f6a] py-14 text-center text-white">
         <p className="mb-3 text-[0.6rem] font-light uppercase tracking-[0.3em] text-white/60">

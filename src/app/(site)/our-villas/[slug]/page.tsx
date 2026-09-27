@@ -6,6 +6,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { VILLA_FEATURES } from '@/lib/villa-features'
 import { CheckCircle2 } from 'lucide-react'
 import VillaImageSlider from '@/components/ui/VillaImageSlider'
+import JsonLd from '@/components/JsonLd'
 import type { Villa, VillaSection } from '@/types'
 import type { Metadata } from 'next'
 
@@ -42,8 +43,50 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
   const sections: VillaSection[] = (villa.content as VillaSection[]) ?? []
   const teaser = villa.tagline ?? null
 
+  const schemaData: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'VacationRental',
+    name: villa.name,
+    description: villa.description ?? `Luxury villa rental in Antigua — ${villa.name}`,
+    url: `https://www.mgl365antigua.com/our-villas/${villa.slug}`,
+    image: gallery.length > 0 ? gallery : (villa.image_url ? [villa.image_url] : undefined),
+    telephone: '+12687885675',
+    email: 'info@mgl365antigua.com',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Antigua',
+      addressCountry: 'AG',
+    },
+    ...(villa.lat && villa.lng ? {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: villa.lat,
+        longitude: villa.lng,
+      },
+    } : {}),
+    ...(villa.price_per_night ? {
+      priceRange: `From $${villa.price_per_night.toLocaleString()} USD per night`,
+    } : {}),
+    ...(villa.max_guests ? { occupancy: { '@type': 'QuantitativeValue', maxValue: villa.max_guests } } : {}),
+    ...(villa.bedrooms ? { numberOfRooms: villa.bedrooms } : {}),
+    containedInPlace: {
+      '@type': 'LodgingBusiness',
+      name: 'MGL 365 Management',
+      url: 'https://www.mgl365antigua.com',
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.mgl365antigua.com' },
+        { '@type': 'ListItem', position: 2, name: 'Our Villas', item: 'https://www.mgl365antigua.com/our-villas' },
+        { '@type': 'ListItem', position: 3, name: villa.name, item: `https://www.mgl365antigua.com/our-villas/${villa.slug}` },
+      ],
+    },
+  }
+
   return (
     <div className="bg-white">
+      <JsonLd data={schemaData} />
 
       {/* ── Hero + callout ── */}
       <section className="relative w-full">
