@@ -27,9 +27,11 @@ export async function generateMetadata(
   const { slug } = await params
   const villa = await getVilla(slug)
   if (!villa) return {}
+  const rawDesc = villa.description ?? `Luxury villa rental in Antigua — ${villa.name}`
+  const description = rawDesc.length > 155 ? rawDesc.slice(0, 152) + '…' : rawDesc
   return {
     title: `${villa.name} | MGL 365 Management`,
-    description: villa.description ?? `Luxury villa rental in Antigua — ${villa.name}`,
+    description,
   }
 }
 
@@ -74,19 +76,22 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
       name: 'MGL 365 Management',
       url: 'https://www.mgl365antigua.com',
     },
-    breadcrumb: {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.mgl365antigua.com' },
-        { '@type': 'ListItem', position: 2, name: 'Our Villas', item: 'https://www.mgl365antigua.com/our-villas' },
-        { '@type': 'ListItem', position: 3, name: villa.name, item: `https://www.mgl365antigua.com/our-villas/${villa.slug}` },
-      ],
-    },
+  }
+
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.mgl365antigua.com' },
+      { '@type': 'ListItem', position: 2, name: 'Our Villas', item: 'https://www.mgl365antigua.com/our-villas' },
+      { '@type': 'ListItem', position: 3, name: villa.name, item: `https://www.mgl365antigua.com/our-villas/${villa.slug}` },
+    ],
   }
 
   return (
     <div className="bg-white">
       <JsonLd data={schemaData} />
+      <JsonLd data={breadcrumbData} />
 
       {/* ── Hero + callout ── */}
       <section className="relative w-full">

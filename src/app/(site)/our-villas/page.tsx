@@ -9,7 +9,7 @@ export const revalidate = 0
 
 export const metadata = {
   title: 'Our Villas | MGL 365 Management',
-  description: 'Explore our collection of premium villa rentals in Antigua.',
+  description: 'Explore our collection of luxury villa rentals in Antigua — Cool House, Water Edge, Starfish House Upper and Lower. Private pools, ocean views, and full concierge services.',
 }
 
 async function getVillas(): Promise<Villa[]> {
