@@ -29,6 +29,8 @@ export default function ImageSlider() {
             src={slides[current].src}
             alt={slides[current].alt}
             fill
+            sizes="(max-width: 768px) 100vw, 1100px"
+            quality={75}
             className="object-cover"
           />
         </div>

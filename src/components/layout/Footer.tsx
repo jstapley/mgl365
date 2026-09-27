@@ -24,10 +24,10 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-white/80">
               {[
                 { href: '/our-villas', label: 'Our Villas' },
-                { href: '/concierge-services', label: 'Concierge Services' },
-                { href: '/about', label: 'About Us' },
-                { href: '/faqs', label: 'FAQs' },
-                { href: '/testimonials', label: 'Testimonials' },
+                { href: '/#concierge', label: 'Concierge Services' },
+                { href: '/#about', label: 'About Us' },
+                { href: '/#faqs', label: 'FAQs' },
+                { href: '/#testimonials', label: 'Testimonials' },
                 { href: '/contact', label: 'Contact Us' },
               ].map((link) => (
                 <li key={link.href}>

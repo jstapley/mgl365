@@ -28,6 +28,7 @@ export default function VillaImageSlider({ images }: { images: string[] }) {
               alt={`Gallery image ${idx + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, 1000px"
+              quality={75}
               className="object-cover"
               priority={idx === 0}
             />
