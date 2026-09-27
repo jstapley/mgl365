@@ -234,6 +234,23 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
           </div>
         </div>
       </div>
+
+      {/* ── Map ── */}
+      {villa.lat && villa.lng && (
+        <section className="mx-auto max-w-[1000px] px-6 pb-16">
+          <h2 className="mb-4 font-[var(--font-playfair)] text-2xl text-[#000321]">Location</h2>
+          <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+            <iframe
+              title={`Map showing location of ${villa.name}`}
+              width="100%"
+              height="400"
+              style={{ border: 0, display: 'block' }}
+              loading="lazy"
+              src={`https://maps.google.com/maps?q=${villa.lat},${villa.lng}&z=15&output=embed`}
+            />
+          </div>
+        </section>
+      )}
     </div>
   )
 }

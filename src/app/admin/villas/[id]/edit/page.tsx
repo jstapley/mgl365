@@ -37,6 +37,17 @@ export default async function EditVillaPage({ params }: { params: Promise<{ id: 
         <Field label="Price per Night (USD)" name="price_per_night" type="number" step="0.01" defaultValue={villa.price_per_night?.toString() ?? ''} />
 
         <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Map Location</label>
+          <p className="mb-1.5 text-xs text-gray-400">
+            Find the villa on <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" className="text-[#1f5772] underline">Google Maps</a>, right-click the pin, and copy the coordinates.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Latitude" name="lat" type="number" step="any" defaultValue={villa.lat?.toString() ?? ''} />
+            <Field label="Longitude" name="lng" type="number" step="any" defaultValue={villa.lng?.toString() ?? ''} />
+          </div>
+        </div>
+
+        <div>
           <label className="mb-1 block text-xs font-medium text-gray-700">Status</label>
           <select
             name="active"

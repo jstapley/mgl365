@@ -19,6 +19,8 @@ export async function createVilla(formData: FormData) {
     features: formData.getAll('features') as string[],
     gallery_images: (formData.getAll('gallery_images') as string[]).filter(Boolean),
     content: JSON.parse((formData.get('content') as string) || '[]'),
+    lat: formData.get('lat') ? Number(formData.get('lat')) : null,
+    lng: formData.get('lng') ? Number(formData.get('lng')) : null,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/admin/villas')
@@ -40,6 +42,8 @@ export async function updateVilla(id: string, formData: FormData) {
     features: formData.getAll('features') as string[],
     gallery_images: (formData.getAll('gallery_images') as string[]).filter(Boolean),
     content: JSON.parse((formData.get('content') as string) || '[]'),
+    lat: formData.get('lat') ? Number(formData.get('lat')) : null,
+    lng: formData.get('lng') ? Number(formData.get('lng')) : null,
   }).eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/admin/villas')

@@ -33,6 +33,8 @@ export interface Villa {
   features: string[]
   gallery_images: string[]
   content: VillaSection[] | null
+  lat: number | null
+  lng: number | null
   created_at: string
   updated_at: string
 }
