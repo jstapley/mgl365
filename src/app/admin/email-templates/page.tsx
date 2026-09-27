@@ -7,7 +7,7 @@ async function getTemplates() {
   const { data } = await supabase
     .from('email_templates')
     .select('*')
-    .order('created_at', { ascending: true })
+    .order('name', { ascending: true })
   return data ?? []
 }
 
