@@ -12,9 +12,11 @@ async function getTemplates() {
 }
 
 const TRIGGER_LABELS: Record<string, string> = {
-  booking_pending:     'New Booking (Pending)',
-  onboarding_complete: 'Onboarding Complete',
-  booking_completed:   'Booking Completed (Thank You)',
+  booking_pending:          'New Booking (Pending)',
+  onboarding_complete:      'Onboarding Complete',
+  booking_completed:        'Booking Completed (Thank You)',
+  onboarding_reminder_3mo:  'Onboarding Reminder — 3 Months Out',
+  onboarding_reminder_4wk:  'Onboarding Reminder — 4 Weeks Out',
 }
 
 export default async function EmailTemplatesPage() {
