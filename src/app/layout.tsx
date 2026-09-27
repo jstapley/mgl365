@@ -32,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           name: 'MGL 365 Management',
           url: 'https://www.mgl365antigua.com',
           logo: 'https://www.mgl365antigua.com/logo.png',
+          image: 'https://www.mgl365antigua.com/logo.png',
           email: 'info@mgl365antigua.com',
           telephone: '+12687885675',
           address: {
