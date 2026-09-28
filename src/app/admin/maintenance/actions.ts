@@ -126,3 +126,13 @@ export async function deleteIssue(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/maintenance')
 }
+
+export async function updateIssueImage(id: string, imageUrl: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase
+    .from('maintenance_issues')
+    .update({ image_url: imageUrl })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+}

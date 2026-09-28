@@ -24,6 +24,7 @@ interface Issue {
   notes: string | null
   created_at: string
   resolved_at: string | null
+  image_url: string | null
 }
 
 // Display order for villa tabs
