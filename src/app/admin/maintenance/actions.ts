@@ -94,3 +94,35 @@ export async function deleteSchedule(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/maintenance')
 }
+
+// ── Ad-hoc issues ─────────────────────────────────────────────────────────────
+
+export async function createIssue(villaId: string, formData: FormData) {
+  const supabase = getServiceSupabase()
+  const description = (formData.get('description') as string)?.trim()
+  if (!description) return
+  const { error } = await supabase.from('maintenance_issues').insert({
+    villa_id: villaId,
+    description,
+    notes: (formData.get('notes') as string)?.trim() || null,
+  })
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+}
+
+export async function resolveIssue(id: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase
+    .from('maintenance_issues')
+    .update({ resolved_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+}
+
+export async function deleteIssue(id: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('maintenance_issues').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+}
