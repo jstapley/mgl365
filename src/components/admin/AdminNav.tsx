@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList, MailOpen } from 'lucide-react'
+import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList, MailOpen, X } from 'lucide-react'
 import { logout } from '@/app/admin/actions'
 
 const links = [
@@ -20,13 +20,13 @@ const links = [
   { href: '/admin/email-templates', label: 'Email Templates',  icon: MailOpen,      exact: false },
 ]
 
-export default function AdminNav() {
+export default function AdminNav({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-[#1f5772]">
-      {/* Logo */}
-      <div className="border-b border-white/10 px-4 py-4">
+    <aside className="flex h-full w-56 shrink-0 flex-col bg-[#1f5772]">
+      {/* Logo + mobile close button */}
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
         <div className="rounded-lg bg-white px-3 py-2">
           <Image
             src="/logo.png"
@@ -38,6 +38,15 @@ export default function AdminNav() {
             priority
           />
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white md:hidden"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Nav links */}
@@ -49,6 +58,7 @@ export default function AdminNav() {
               <li key={href}>
                 <Link
                   href={href}
+                  onClick={onClose}
                   className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors ${
                     active
                       ? 'bg-white/15 font-medium text-white'
