@@ -10,8 +10,13 @@ export async function middleware(request: NextRequest) {
 
   // ── Admin subdomain ──────────────────────────────────────────────────────
   if (onAdminHost) {
-    // Let API routes and Next.js internals pass through unchanged
-    if (pathname.startsWith('/api/') || pathname.startsWith('/_next')) {
+    // Let API routes, Next.js internals, and static files (anything with a
+    // file extension: manifest, icons, robots.txt, etc.) pass through unchanged
+    if (
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next') ||
+      /\.[a-z0-9]+$/i.test(pathname)   // has a file extension
+    ) {
       return NextResponse.next({ request })
     }
 
