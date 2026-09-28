@@ -105,6 +105,7 @@ export async function createIssue(villaId: string, formData: FormData) {
     villa_id: villaId,
     description,
     notes: (formData.get('notes') as string)?.trim() || null,
+    image_url: (formData.get('image_url') as string)?.trim() || null,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/admin/maintenance')

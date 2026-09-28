@@ -82,16 +82,40 @@ export default function IssuePanel({ villaId, initialIssues }: { villaId: string
   const [showForm, setShowForm] = useState(false)
   const [showResolved, setShowResolved] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const imageUrlRef = useRef<HTMLInputElement>(null)
 
   const open = initialIssues.filter(i => !i.resolved_at)
   const resolved = initialIssues.filter(i => i.resolved_at)
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoPreview(URL.createObjectURL(file))
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      const renamed = new File([file], `maintenance/${Date.now()}-${file.name}`, { type: file.type })
+      fd.append('file', renamed)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (json.url && imageUrlRef.current) {
+        imageUrlRef.current.value = json.url
+      }
+    } finally {
+      setUploading(false)
+    }
+  }
 
   function handleCreate(formData: FormData) {
     startTransition(async () => {
       await createIssue(villaId, formData)
       formRef.current?.reset()
       setShowForm(false)
+      setPhotoPreview(null)
     })
   }
 
@@ -136,17 +160,60 @@ export default function IssuePanel({ villaId, initialIssues }: { villaId: string
             placeholder="Notes (optional)"
             className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
           />
+          {/* Hidden field populated after upload */}
+          <input ref={imageUrlRef} type="hidden" name="image_url" />
+
+          {/* Photo upload */}
+          <div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            {photoPreview ? (
+              <div className="flex items-center gap-3">
+                <img src={photoPreview} alt="Preview" className="h-16 w-16 rounded border border-gray-200 object-cover" />
+                <div className="text-xs text-gray-500">
+                  {uploading ? (
+                    <span className="text-amber-600">Uploading…</span>
+                  ) : (
+                    <span className="text-green-600">Photo ready</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setPhotoPreview(null); if (imageUrlRef.current) imageUrlRef.current.value = ''; if (photoInputRef.current) photoInputRef.current.value = '' }}
+                    className="ml-2 text-gray-400 hover:text-red-500"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="flex items-center gap-1.5 rounded border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:border-[#1f5772] hover:text-[#1f5772] transition-colors"
+              >
+                <Upload size={12} />
+                Add photo (optional)
+              </button>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || uploading}
               className="rounded bg-[#1f5772] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#174560] disabled:opacity-50"
             >
-              {isPending ? 'Saving…' : 'Add Issue'}
+              {isPending ? 'Saving…' : uploading ? 'Uploading…' : 'Add Issue'}
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={() => { setShowForm(false); setPhotoPreview(null) }}
               className="rounded border border-gray-300 px-4 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
             >
               Cancel
