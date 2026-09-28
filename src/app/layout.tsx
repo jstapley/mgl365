@@ -14,17 +14,30 @@ export const metadata: Metadata = {
   title: 'MGL 365 Management | Premium Villa Rentals in Antigua',
   description:
     'Premium villa rentals & property management in Antigua. Where homes are cared for and dreams come true.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'MGL 365',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: '/favicon.png',
+    apple: '/icons/apple-touch-icon.png',
   },
   verification: {
     google: '7Q3pWm6YrP-UNXUsdFJv8I6gdO8On3UbsQ2iJyWLsDQ',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+      <head>
+        <meta name="theme-color" content="#1c4f6a" />
+      </head>
       <body className="flex min-h-full flex-col font-[var(--font-inter)]">
         <JsonLd data={{
           '@context': 'https://schema.org',
