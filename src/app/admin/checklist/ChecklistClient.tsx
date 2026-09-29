@@ -172,7 +172,7 @@ function SectionForm({
           />
           <span className="text-xs text-gray-500">Any changes or notes?</span>
         </label>
-        {values.changes && (
+        {!!values.changes && (
           <textarea
             value={(values.changes_text as string) ?? ''}
             onChange={e => onChange(section.id, 'changes_text', e.target.value)}
