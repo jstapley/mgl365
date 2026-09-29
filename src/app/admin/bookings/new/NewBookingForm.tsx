@@ -70,6 +70,20 @@ export default function NewBookingForm({ villas, clients }: Props) {
           </select>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Stay Type</label>
+            <select name="booking_type" defaultValue="guest" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]">
+              <option value="guest">Guest</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Mid-stay Clean Date</label>
+            <input name="midstay_clean_date" type="date" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]" />
+          </div>
+        </div>
+
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700">Status</label>
           <select name="status" defaultValue="pending" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]">

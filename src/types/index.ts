@@ -62,6 +62,7 @@ export interface Client {
 }
 
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+export type BookingType = 'guest' | 'owner'
 
 export interface Booking {
   id: string
@@ -72,6 +73,8 @@ export interface Booking {
   guests: number | null
   package: string | null
   status: BookingStatus
+  booking_type: BookingType
+  midstay_clean_date: string | null
   total_amount: number | null
   notes: string | null
   created_at: string
