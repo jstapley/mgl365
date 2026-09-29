@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { getServiceSupabase } from '@/lib/supabase'
 import { FileText, ClipboardList, CheckCircle, Clock } from 'lucide-react'
+import SavedToast from './SavedToast'
 
 async function getData() {
   const supabase = getServiceSupabase()
@@ -31,6 +33,7 @@ export default async function FormsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold text-gray-900">Forms</h1>
+      <Suspense><SavedToast /></Suspense>
 
       {/* Liability forms per villa */}
       <section>
