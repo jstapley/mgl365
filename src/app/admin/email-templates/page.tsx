@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { getServiceSupabase } from '@/lib/supabase'
 import { Mail, CheckCircle, XCircle } from 'lucide-react'
+import SavedToast from './SavedToast'
 
 async function getTemplates() {
   const supabase = getServiceSupabase()
@@ -31,6 +33,8 @@ export default async function EmailTemplatesPage() {
           Manage automated emails sent to guests when booking events occur.
         </p>
       </div>
+
+      <Suspense><SavedToast /></Suspense>
 
       <div className="space-y-3">
         {templates.map((t: any) => (

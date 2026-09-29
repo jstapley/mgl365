@@ -367,6 +367,11 @@ async function sendGoogleReviewEmail(bookingId: string): Promise<string> {
       </a>
     </div>` : ''
 
+  // Strip the raw review URL from the body text so only the button appears
+  const cleanedBodyText = googleReviewUrl
+    ? bodyText.replace(googleReviewUrl, '').replace(/\n{3,}/g, '\n\n').trim()
+    : bodyText
+
   const bodyHtml = `
     <div style="font-family: sans-serif; max-width: 600px; color: #333;">
       <div style="background: #1c4f6a; padding: 24px 32px; margin-bottom: 24px;">
@@ -374,7 +379,7 @@ async function sendGoogleReviewEmail(bookingId: string): Promise<string> {
         <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaName}</p>
       </div>
       <div style="padding: 0 32px 32px;">
-        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText}</div>
+        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${cleanedBodyText}</div>
         ${reviewButtonHtml}
       </div>
     </div>

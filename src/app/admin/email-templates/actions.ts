@@ -22,5 +22,5 @@ export async function updateEmailTemplate(
 
   if (error) return error.message
   revalidatePath('/admin/email-templates')
-  return null
+  return 'ok'
 }

@@ -1,13 +1,23 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateEmailTemplate } from '../actions'
 
 export default function EditTemplateForm({ template }: { template: any }) {
-  const [error, action, isPending] = useActionState(
+  const router = useRouter()
+  const [result, action, isPending] = useActionState(
     updateEmailTemplate.bind(null, template.id),
     null
   )
+
+  useEffect(() => {
+    if (result === 'ok') {
+      router.push('/admin/email-templates?saved=1')
+    }
+  }, [result, router])
+
+  const error = result && result !== 'ok' ? result : null
 
   return (
     <form action={action} className="space-y-5">
