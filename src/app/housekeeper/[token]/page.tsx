@@ -2,6 +2,11 @@ import { notFound } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
 import Image from 'next/image'
 import HousekeeperCalendar from './HousekeeperCalendar'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export interface BookingRow {
   id: string
