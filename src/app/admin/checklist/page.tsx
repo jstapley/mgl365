@@ -4,53 +4,20 @@ import ChecklistClient from './ChecklistClient'
 
 const VILLA_ORDER = ['Cool House', 'Water Edge', 'Starfish Lower', 'Starfish Upper']
 
-interface ChecklistItem {
+interface Inspection {
   id: string
-  label: string
-  sort_order: number
+  inspection_date: string
+  checked_by: string
+  checked_by_other: string | null
+  responses: Record<string, Record<string, unknown>>
+  created_at: string
 }
 
-interface SnapshotResult {
-  item_label: string
-  checked: boolean
-  notes: string | null
-}
-
-interface Snapshot {
-  id: string
-  snapshot_date: string
-  notes: string | null
-  booking_id: string | null
-  checklist_results: SnapshotResult[]
-}
-
-async function getData() {
+async function getData(activeVillaId?: string) {
   const supabase = getServiceSupabase()
-  const [{ data: villas }, { data: items }, { data: snapshots }] = await Promise.all([
-    supabase.from('villas').select('id, name').eq('active', true).order('name'),
-    supabase.from('checklist_items').select('id, villa_id, label, sort_order').eq('active', true).order('sort_order'),
-    supabase
-      .from('checklist_snapshots')
-      .select('id, villa_id, snapshot_date, notes, booking_id, checklist_results(item_label, checked, notes)')
-      .order('snapshot_date', { ascending: false }),
-  ])
-  return {
-    villas: (villas ?? []) as { id: string; name: string }[],
-    items: (items ?? []) as (ChecklistItem & { villa_id: string })[],
-    snapshots: (snapshots ?? []) as (Snapshot & { villa_id: string })[],
-  }
-}
+  const { data: villas } = await supabase.from('villas').select('id, name').eq('active', true)
 
-export default async function ChecklistPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ villa?: string }>
-}) {
-  const { villa: activeVillaId } = await searchParams
-  const { villas, items, snapshots } = await getData()
-
-  // Sort villas by defined order
-  const sortedVillas = [...villas].sort((a, b) => {
+  const sortedVillas = [...(villas ?? [])].sort((a, b) => {
     const ai = VILLA_ORDER.indexOf(a.name)
     const bi = VILLA_ORDER.indexOf(b.name)
     if (ai === -1 && bi === -1) return a.name.localeCompare(b.name)
@@ -59,28 +26,44 @@ export default async function ChecklistPage({
     return ai - bi
   })
 
-  const currentId = activeVillaId && villas.find(v => v.id === activeVillaId)
-    ? activeVillaId
-    : sortedVillas[0]?.id
+  const currentId =
+    activeVillaId && sortedVillas.find(v => v.id === activeVillaId)
+      ? activeVillaId
+      : sortedVillas[0]?.id
 
+  let inspections: Inspection[] = []
+  if (currentId) {
+    const { data } = await supabase
+      .from('inspections')
+      .select('id, inspection_date, checked_by, checked_by_other, responses, created_at')
+      .eq('villa_id', currentId)
+      .order('inspection_date', { ascending: false })
+      .limit(10)
+    inspections = (data ?? []) as Inspection[]
+  }
+
+  return { sortedVillas, currentId, inspections }
+}
+
+export default async function ChecklistPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ villa?: string }>
+}) {
+  const { villa: activeVillaId } = await searchParams
+  const { sortedVillas, currentId, inspections } = await getData(activeVillaId)
   const currentVilla = sortedVillas.find(v => v.id === currentId)
-  const villaItems = items.filter(i => i.villa_id === currentId)
-  const villaSnapshots = snapshots.filter(s => s.villa_id === currentId)
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">Checklist</h1>
+        <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">Inspection Checklist</h1>
       </div>
 
-      {/* Villa tabs — scrollable on mobile */}
       {sortedVillas.length > 0 && (
         <div className="mb-0 flex gap-0 overflow-x-auto border-b border-gray-200">
           {sortedVillas.map(villa => {
             const isActive = villa.id === currentId
-            const openCount = snapshots
-              .filter(s => s.villa_id === villa.id)
-              .slice(0, 1).length  // just for indicator; could show incomplete etc.
             return (
               <Link
                 key={villa.id}
@@ -102,8 +85,8 @@ export default async function ChecklistPage({
         <div className="overflow-hidden rounded-b rounded-tr border border-t-0 border-gray-200 bg-white">
           <ChecklistClient
             villaId={currentVilla.id}
-            initialItems={villaItems}
-            initialSnapshots={villaSnapshots}
+            villaName={currentVilla.name}
+            initialInspections={inspections}
           />
         </div>
       ) : (
