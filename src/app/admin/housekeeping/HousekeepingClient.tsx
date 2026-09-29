@@ -18,9 +18,15 @@ const SHORT_MONTHS = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ]
 
+// Regular house cleanings: name → day of week (0=Sun, 1=Mon … 6=Sat)
+const REGULAR_HOUSES: { name: string; dayOfWeek: number }[] = [
+  { name: "Jamie's House",  dayOfWeek: 1 }, // every Monday
+  { name: "Michel's House", dayOfWeek: 4 }, // every Thursday
+]
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type TaskType = 'checkin' | 'checkout' | 'checkin_checkout' | 'midstay'
+type TaskType = 'checkin' | 'checkout' | 'checkin_checkout' | 'midstay' | 'regular'
 type BT = 'guest' | 'owner'
 
 interface Task {
@@ -52,6 +58,7 @@ function taskLabel(task: Task): string {
   if (task.type === 'checkin') base = `Check In ${task.villaName}`
   else if (task.type === 'checkout') base = `Check Out ${task.villaName}`
   else if (task.type === 'checkin_checkout') base = `Check Out / Check In ${task.villaName}`
+  else if (task.type === 'regular') return task.villaName
   else base = `Maid Service ${task.villaName}`
   return task.bookingType === 'owner' ? `${base} — Owners` : base
 }
@@ -93,6 +100,16 @@ function deriveTasks(bookings: BookingRow[], year: number, month: number): Task[
       tasks.push({ date, villaName, type: 'checkin', bookingType: checkin })
     } else if (checkout) {
       tasks.push({ date, villaName, type: 'checkout', bookingType: checkout })
+    }
+  }
+
+  // Regular house cleanings
+  const daysInMonth = new Date(year, month, 0).getDate()
+  for (const { name, dayOfWeek } of REGULAR_HOUSES) {
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (new Date(year, month - 1, day).getDay() === dayOfWeek) {
+        tasks.push({ date: `${year}-${pad(month)}-${pad(day)}`, villaName: name, type: 'regular', bookingType: 'guest' })
+      }
     }
   }
 
@@ -142,6 +159,7 @@ const TASK_COLORS: Record<TaskType, string> = {
   checkout: 'bg-red-100 text-red-700',
   checkin_checkout: 'bg-purple-100 text-purple-700',
   midstay: 'bg-blue-100 text-blue-700',
+  regular: 'bg-gray-100 text-gray-600',
 }
 
 const TASK_LABELS: Record<TaskType, string> = {
@@ -149,6 +167,7 @@ const TASK_LABELS: Record<TaskType, string> = {
   checkout: 'Check Out',
   checkin_checkout: 'Check Out / Check In',
   midstay: 'Maid Service',
+  regular: 'Regular Clean',
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
