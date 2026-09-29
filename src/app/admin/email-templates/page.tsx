@@ -17,6 +17,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   booking_completed:        'Booking Completed (Thank You)',
   onboarding_reminder_3mo:  'Onboarding Reminder — 3 Months Out',
   onboarding_reminder_4wk:  'Onboarding Reminder — 4 Weeks Out',
+  google_review:            'Google Review Request (Manual)',
 }
 
 export default async function EmailTemplatesPage() {

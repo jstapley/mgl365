@@ -321,3 +321,79 @@ export async function resendBookingEmail(id: string): Promise<string> {
   revalidatePath(`/admin/bookings/${id}`)
   return result
 }
+
+async function sendGoogleReviewEmail(bookingId: string): Promise<string> {
+  const supabase = getServiceSupabase()
+
+  const { data: tmpl, error: tmplError } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('trigger', 'google_review')
+    .eq('active', true)
+    .single()
+  if (tmplError) return `Template fetch error: ${tmplError.message}`
+  if (!tmpl) return 'No active google_review template found'
+
+  const { data: booking, error: bookingError } = await supabase
+    .from('bookings')
+    .select('id, check_in, check_out, villas(name), clients(name, email)')
+    .eq('id', bookingId)
+    .single()
+  if (bookingError) return `Booking fetch error: ${bookingError.message}`
+  if (!booking) return `Booking not found: ${bookingId}`
+
+  const client = (booking as any).clients
+  const villaName = (booking as any).villas?.name ?? 'your villa'
+  if (!client?.email) return `Client has no email address`
+
+  const googleReviewUrl = process.env.GOOGLE_REVIEW_URL ?? ''
+
+  const vars = {
+    guest_name:          client.name ?? '',
+    guest_first_name:    (client.name ?? '').split(' ')[0],
+    villa_name:          villaName,
+    check_in:            booking.check_in ? new Date(booking.check_in).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '',
+    check_out:           booking.check_out ? new Date(booking.check_out).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '',
+    google_review_link:  googleReviewUrl,
+  }
+
+  const subject = applyTemplate(tmpl.subject, vars)
+  const bodyText = applyTemplate(tmpl.body, vars)
+
+  const reviewButtonHtml = googleReviewUrl ? `
+    <div style="margin-top: 28px; text-align: center;">
+      <a href="${googleReviewUrl}" style="display: inline-block; background: #4285F4; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
+        Leave a Google Review
+      </a>
+    </div>` : ''
+
+  const bodyHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; color: #333;">
+      <div style="background: #1c4f6a; padding: 24px 32px; margin-bottom: 24px;">
+        <p style="color: white; margin: 0; font-size: 18px; font-weight: 600;">MGL 365 Management</p>
+        <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaName}</p>
+      </div>
+      <div style="padding: 0 32px 32px;">
+        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText}</div>
+        ${reviewButtonHtml}
+      </div>
+    </div>
+  `
+
+  const { data: emailData, error: emailError } = await resend.emails.send({
+    from: 'MGL 365 Management <info@mgl365antigua.com>',
+    to: client.email,
+    cc: 'mgl365management@gmail.com',
+    replyTo: 'mgl365management@gmail.com',
+    subject,
+    html: bodyHtml,
+  })
+  if (emailError) return `Resend error: ${JSON.stringify(emailError)}`
+  return `OK:${emailData?.id}`
+}
+
+export async function resendGoogleReviewEmail(id: string): Promise<string> {
+  const result = await sendGoogleReviewEmail(id).catch(String)
+  revalidatePath(`/admin/bookings/${id}`)
+  return result
+}

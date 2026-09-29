@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { resendBookingEmail, resendCompletedEmail } from '../actions'
+import { resendBookingEmail, resendCompletedEmail, resendGoogleReviewEmail } from '../actions'
 import { Mail } from 'lucide-react'
 
 function EmailButton({ label, action }: { label: string; action: () => Promise<string> }) {
@@ -42,6 +42,7 @@ export default function ResendEmailButtons({ bookingId }: { bookingId: string })
     <div className="flex flex-col gap-2">
       <EmailButton label="Send Confirmation Email" action={() => resendBookingEmail(bookingId)} />
       <EmailButton label="Send Thank You Email" action={() => resendCompletedEmail(bookingId)} />
+      <EmailButton label="Send Google Review Request" action={() => resendGoogleReviewEmail(bookingId)} />
     </div>
   )
 }

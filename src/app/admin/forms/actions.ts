@@ -1,14 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
 
-export async function saveLiabilityForm(villaId: string, _prev: string | null, formData: FormData): Promise<string | null> {
+export async function saveLiabilityForm(villaId: string, _prev: string | null, formData: FormData): Promise<string> {
   const supabase = getServiceSupabase()
   const content = formData.get('content') as string
 
-  // Try update first, then insert if no row exists
   const { data: existing } = await supabase
     .from('liability_forms')
     .select('id')
@@ -29,7 +27,6 @@ export async function saveLiabilityForm(villaId: string, _prev: string | null, f
 
   if (error) return error.message
 
-  revalidatePath('/admin/forms')
   revalidatePath('/admin/forms/liability')
-  redirect(`/admin/forms/liability?villa=${villaId}`)
+  return 'ok'
 }

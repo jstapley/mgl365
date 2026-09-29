@@ -1,7 +1,8 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { CheckCircle } from 'lucide-react'
 import { saveLiabilityForm } from '../actions'
 
 interface Props {
@@ -13,13 +14,30 @@ interface Props {
 
 export default function LiabilityFormClient({ villaId, villaName, initialContent, updatedAt }: Props) {
   const action = saveLiabilityForm.bind(null, villaId)
-  const [error, formAction, isPending] = useActionState(action, null)
+  const [result, formAction, isPending] = useActionState(action, null)
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  useEffect(() => {
+    if (result === 'ok') {
+      setShowSuccess(true)
+      const t = setTimeout(() => setShowSuccess(false), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [result])
+
+  const error = result && result !== 'ok' ? result : null
 
   return (
     <form action={formAction} className="space-y-4 rounded border border-gray-200 bg-white p-6">
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+      {showSuccess && (
+        <div className="flex items-center gap-2 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <CheckCircle size={15} />
+          Form updated successfully.
         </div>
       )}
 
