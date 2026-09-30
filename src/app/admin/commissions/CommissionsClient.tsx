@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { PlusCircle, Trash2, ChevronLeft } from 'lucide-react'
 import { createEntry, updatePaymentStatus, deleteEntry } from './actions'
 import { useRouter } from 'next/navigation'
-import type { Provider, Villa, Entry } from './page'
+import type { Provider, Villa, Entry, Client } from './page'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -43,18 +43,29 @@ function entryMonth(e: Entry) {
 function AddEntryForm({
   providers,
   villas,
+  clients,
   defaultProviderId,
   onCancel,
 }: {
   providers: Provider[]
   villas: Villa[]
+  clients: Client[]
   defaultProviderId?: string
   onCancel: () => void
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [serviceBooked, setServiceBooked] = useState(() => {
+    if (!defaultProviderId) return ''
+    return providers.find(p => p.id === defaultProviderId)?.primary_service ?? ''
+  })
   const today = new Date().toISOString().slice(0, 10)
+
+  function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const p = providers.find(p => p.id === e.target.value)
+    setServiceBooked(p?.primary_service ?? '')
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -72,6 +83,11 @@ function AddEntryForm({
     <form onSubmit={handleSubmit} className="rounded border border-gray-200 bg-blue-50 p-4 space-y-3">
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      {/* datalist for guest typeahead */}
+      <datalist id="clients-list">
+        {clients.map(c => <option key={c.id} value={c.name} />)}
+      </datalist>
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Date *</label>
@@ -81,6 +97,7 @@ function AddEntryForm({
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Provider *</label>
           <select name="provider_id" required defaultValue={defaultProviderId ?? ''}
+            onChange={handleProviderChange}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
             <option value="">— Select —</option>
             {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -97,11 +114,13 @@ function AddEntryForm({
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Guest Name</label>
           <input name="guest_name" type="text" placeholder="Guest name…"
+            list="clients-list"
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Service Booked</label>
           <input name="service_booked" type="text" placeholder="e.g. Golf Cart Rental"
+            value={serviceBooked} onChange={e => setServiceBooked(e.target.value)}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
@@ -157,12 +176,14 @@ function ProviderDetail({
   entries,
   villas,
   providers,
+  clients,
   onBack,
 }: {
   provider: Provider
   entries: Entry[]
   villas: Villa[]
   providers: Provider[]
+  clients: Client[]
   onBack: () => void
 }) {
   const router = useRouter()
@@ -225,7 +246,7 @@ function ProviderDetail({
       {/* Add entry */}
       {showForm ? (
         <div className="mb-4">
-          <AddEntryForm providers={providers} villas={villas} defaultProviderId={provider.id} onCancel={() => setShowForm(false)} />
+          <AddEntryForm providers={providers} villas={villas} clients={clients} defaultProviderId={provider.id} onCancel={() => setShowForm(false)} />
         </div>
       ) : (
         <button onClick={() => setShowForm(true)}
@@ -337,10 +358,12 @@ export default function CommissionsClient({
   providers,
   villas,
   entries,
+  clients,
 }: {
   providers: Provider[]
   villas: Villa[]
   entries: Entry[]
+  clients: Client[]
 }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
@@ -365,6 +388,7 @@ export default function CommissionsClient({
         entries={providerEntries}
         villas={villas}
         providers={providers}
+        clients={clients}
         onBack={() => setSelectedProviderId(null)}
       />
     )
@@ -418,7 +442,7 @@ export default function CommissionsClient({
       </div>
 
       {showForm && (
-        <AddEntryForm providers={providers} villas={villas} onCancel={() => { setShowForm(false); router.refresh() }} />
+        <AddEntryForm providers={providers} villas={villas} clients={clients} onCancel={() => { setShowForm(false); router.refresh() }} />
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

@@ -13,6 +13,11 @@ export interface Villa {
   name: string
 }
 
+export interface Client {
+  id: string
+  name: string
+}
+
 export interface Entry {
   id: string
   provider_id: string
@@ -30,10 +35,11 @@ export interface Entry {
 
 export default async function CommissionsPage() {
   const supabase = getServiceSupabase()
-  const [{ data: providers }, { data: villas }, { data: entries }] = await Promise.all([
+  const [{ data: providers }, { data: villas }, { data: entries }, { data: clients }] = await Promise.all([
     supabase.from('commission_providers').select('id, name, primary_service, sort_order').eq('active', true).order('sort_order'),
     supabase.from('villas').select('id, name').eq('active', true).order('name'),
     supabase.from('commission_entries').select('*').order('entry_date', { ascending: false }),
+    supabase.from('clients').select('id, name').order('name'),
   ])
 
   return (
@@ -45,6 +51,7 @@ export default async function CommissionsPage() {
         providers={(providers ?? []) as Provider[]}
         villas={(villas ?? []) as Villa[]}
         entries={(entries ?? []) as Entry[]}
+        clients={(clients ?? []) as Client[]}
       />
     </div>
   )
