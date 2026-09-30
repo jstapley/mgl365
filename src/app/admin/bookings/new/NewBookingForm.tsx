@@ -96,6 +96,15 @@ export default function NewBookingForm({ villas, clients }: Props) {
         </div>
 
         <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Booking Platform</label>
+          <select name="booking_platform" defaultValue="" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]">
+            <option value="">— None —</option>
+            <option value="VRBO">VRBO</option>
+            <option value="Airbnb">Airbnb</option>
+          </select>
+        </div>
+
+        <div>
           <label className="mb-1 block text-xs font-medium text-gray-700">Notes</label>
           <textarea name="notes" rows={3} className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]" />
         </div>

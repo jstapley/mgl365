@@ -139,6 +139,7 @@ export async function createBooking(
     status: (formData.get('status') as BookingStatus) || 'pending',
     booking_type: (formData.get('booking_type') as string) || 'guest',
     midstay_clean_date: (formData.get('midstay_clean_date') as string) || null,
+    booking_platform: (formData.get('booking_platform') as string) || null,
     total_amount: formData.get('total_amount') ? Number(formData.get('total_amount')) : null,
     notes: (formData.get('notes') as string) || null,
   }).select('id').single()
@@ -308,6 +309,7 @@ export async function updateBooking(
     status: formData.get('status') as BookingStatus,
     booking_type: (formData.get('booking_type') as string) || 'guest',
     midstay_clean_date: (formData.get('midstay_clean_date') as string) || null,
+    booking_platform: (formData.get('booking_platform') as string) || null,
     total_amount: formData.get('total_amount') ? Number(formData.get('total_amount')) : null,
     notes: (formData.get('notes') as string) || null,
   }).eq('id', id)
