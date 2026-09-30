@@ -61,23 +61,11 @@ function EntryForm({
   const [serviceBooked, setServiceBooked] = useState(
     entry?.service_booked ?? providers.find(p => p.id === defaultProviderId)?.primary_service ?? ''
   )
-  const [commissionUsd, setCommissionUsd] = useState(entry?.commission_usd?.toString() ?? '')
-  const [commissionXcd, setCommissionXcd] = useState(entry?.commission_xcd?.toString() ?? '')
   const today = new Date().toISOString().slice(0, 10)
 
   function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const p = providers.find(p => p.id === e.target.value)
     setServiceBooked(p?.primary_service ?? '')
-  }
-
-  function handleUsdChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    setCommissionUsd(val)
-    if (val && !isNaN(Number(val))) {
-      setCommissionXcd((Number(val) * 2.7).toFixed(2))
-    } else {
-      setCommissionXcd('')
-    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -147,13 +135,13 @@ function EntryForm({
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Commission USD</label>
           <input name="commission_usd" type="number" step="0.01" min="0" placeholder="0.00"
-            value={commissionUsd} onChange={handleUsdChange}
+            defaultValue={entry?.commission_usd ?? ''}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Commission XCD <span className="text-gray-400 font-normal">(× 2.7)</span></label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Commission XCD</label>
           <input name="commission_xcd" type="number" step="0.01" min="0" placeholder="0.00"
-            value={commissionXcd} onChange={e => setCommissionXcd(e.target.value)}
+            defaultValue={entry?.commission_xcd ?? ''}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
