@@ -61,7 +61,7 @@ export interface Client {
   updated_at: string
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'imported'
 export type BookingType = 'guest' | 'owner'
 
 export interface Booking {

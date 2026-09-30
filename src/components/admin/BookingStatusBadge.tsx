@@ -7,6 +7,7 @@ const STATUS_STYLES: Record<BookingStatus, string> = {
   confirmed: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-600',
   completed: 'bg-gray-100 text-gray-600',
+  imported:  'bg-blue-100 text-blue-600',
 }
 
 const STATUS_INFO: Record<BookingStatus, { title: string; description: string; action: string }> = {
@@ -29,6 +30,11 @@ const STATUS_INFO: Record<BookingStatus, { title: string; description: string; a
     title: 'Cancelled',
     description: 'This booking has been cancelled.',
     action: 'No further action will be taken.',
+  },
+  imported: {
+    title: 'Imported',
+    description: 'Booking migrated from a previous system.',
+    action: 'No automations will fire. Update status manually when ready.',
   },
 }
 

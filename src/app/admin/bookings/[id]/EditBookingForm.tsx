@@ -92,6 +92,7 @@ export default function EditBookingForm({ booking, villas, clients }: Props) {
             <option value="confirmed">Confirmed</option>
             <option value="cancelled">Cancelled</option>
             <option value="completed">Completed</option>
+            <option value="imported">Imported (no automations)</option>
           </select>
         </div>
 
