@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { PlusCircle, Trash2, ChevronLeft } from 'lucide-react'
-import { createEntry, updatePaymentStatus, deleteEntry } from './actions'
+import { PlusCircle, Trash2, ChevronLeft, Pencil } from 'lucide-react'
+import { createEntry, updateEntry, updatePaymentStatus, deleteEntry } from './actions'
 import { useRouter } from 'next/navigation'
 import type { Provider, Villa, Entry, Client } from './page'
 
@@ -38,31 +38,37 @@ function entryMonth(e: Entry) {
   return e.entry_date.slice(0, 7)
 }
 
-// ── Add Entry Form ─────────────────────────────────────────────────────────────
+// ── Entry Form (Add + Edit) ────────────────────────────────────────────────────
 
-function AddEntryForm({
+function EntryForm({
   providers,
   villas,
   clients,
   defaultProviderId,
+  entry,
   onCancel,
 }: {
   providers: Provider[]
   villas: Villa[]
   clients: Client[]
   defaultProviderId?: string
+  entry?: Entry
   onCancel: () => void
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [serviceBooked, setServiceBooked] = useState(() => {
-    if (!defaultProviderId) return ''
-    return providers.find(p => p.id === defaultProviderId)?.primary_service ?? ''
-  })
-  const [commissionUsd, setCommissionUsd] = useState('')
-  const [commissionXcd, setCommissionXcd] = useState('')
+  const [serviceBooked, setServiceBooked] = useState(
+    entry?.service_booked ?? providers.find(p => p.id === defaultProviderId)?.primary_service ?? ''
+  )
+  const [commissionUsd, setCommissionUsd] = useState(entry?.commission_usd?.toString() ?? '')
+  const [commissionXcd, setCommissionXcd] = useState(entry?.commission_xcd?.toString() ?? '')
   const today = new Date().toISOString().slice(0, 10)
+
+  function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const p = providers.find(p => p.id === e.target.value)
+    setServiceBooked(p?.primary_service ?? '')
+  }
 
   function handleUsdChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
@@ -74,17 +80,12 @@ function AddEntryForm({
     }
   }
 
-  function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const p = providers.find(p => p.id === e.target.value)
-    setServiceBooked(p?.primary_service ?? '')
-  }
-
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     setError(null)
     startTransition(async () => {
-      const err = await createEntry(fd)
+      const err = entry ? await updateEntry(entry.id, fd) : await createEntry(fd)
       if (err) { setError(err); return }
       onCancel()
       router.refresh()
@@ -93,9 +94,9 @@ function AddEntryForm({
 
   return (
     <form onSubmit={handleSubmit} className="rounded border border-gray-200 bg-blue-50 p-4 space-y-3">
+      {entry && <p className="text-xs font-semibold text-gray-600">Edit Entry</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {/* datalist for guest typeahead */}
       <datalist id="clients-list">
         {clients.map(c => <option key={c.id} value={c.name} />)}
       </datalist>
@@ -103,12 +104,12 @@ function AddEntryForm({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Date *</label>
-          <input name="entry_date" type="date" required defaultValue={today}
+          <input name="entry_date" type="date" required defaultValue={entry?.entry_date ?? today}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Provider *</label>
-          <select name="provider_id" required defaultValue={defaultProviderId ?? ''}
+          <select name="provider_id" required defaultValue={entry?.provider_id ?? defaultProviderId ?? ''}
             onChange={handleProviderChange}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
             <option value="">— Select —</option>
@@ -117,7 +118,7 @@ function AddEntryForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Villa</label>
-          <select name="villa_id"
+          <select name="villa_id" defaultValue={entry?.villa_id ?? ''}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
             <option value="">— All —</option>
             {villas.map(v => <option key={v.id} value={v.id}>{VILLA_SHORT[v.name] ?? v.name}</option>)}
@@ -126,7 +127,7 @@ function AddEntryForm({
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Guest Name</label>
           <input name="guest_name" type="text" placeholder="Guest name…"
-            list="clients-list"
+            list="clients-list" defaultValue={entry?.guest_name ?? ''}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
         </div>
         <div>
@@ -137,8 +138,9 @@ function AddEntryForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Collected By *</label>
-          <select name="collected_by" required defaultValue="Jamie"
+          <select name="collected_by" required defaultValue={entry?.collected_by ?? ''}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
+            <option value="" disabled>— Select —</option>
             {COLLECTORS.map(c => <option key={c}>{c}</option>)}
           </select>
         </div>
@@ -156,7 +158,7 @@ function AddEntryForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Payment Status</label>
-          <select name="payment_status" defaultValue="unpaid"
+          <select name="payment_status" defaultValue={entry?.payment_status ?? 'unpaid'}
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
             {PAYMENT_STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
@@ -166,13 +168,14 @@ function AddEntryForm({
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
         <input name="notes" type="text" placeholder="Optional notes…"
+          defaultValue={entry?.notes ?? ''}
           className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
       </div>
 
       <div className="flex gap-2 pt-1">
         <button type="submit" disabled={isPending}
           className="rounded bg-[#1f5772] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#174560] disabled:opacity-50">
-          {isPending ? 'Saving…' : 'Add Entry'}
+          {isPending ? 'Saving…' : entry ? 'Save Changes' : 'Add Entry'}
         </button>
         <button type="button" onClick={onCancel}
           className="rounded border border-gray-300 px-4 py-1.5 text-xs text-gray-600 hover:bg-gray-50">
@@ -202,7 +205,8 @@ function ProviderDetail({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [showForm, setShowForm] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null)
 
   const villaById = Object.fromEntries(villas.map(v => [v.id, v]))
 
@@ -220,6 +224,11 @@ function ProviderDetail({
       await deleteEntry(id)
       router.refresh()
     })
+  }
+
+  function handleEditClick(entry: Entry) {
+    setEditingEntry(entry)
+    setShowAddForm(false)
   }
 
   const totalUsd = entries.reduce((s, e) => s + (e.commission_usd ?? 0), 0)
@@ -246,9 +255,9 @@ function ProviderDetail({
       {/* Totals */}
       <div className="mb-4 grid grid-cols-3 gap-3">
         {[
-          { label: 'Total Jobs', value: entries.length, isNum: false },
-          { label: 'Total USD', value: fmt(totalUsd || null), isNum: false },
-          { label: 'Total XCD', value: fmt(totalXcd || null, 'EC$'), isNum: false },
+          { label: 'Total Jobs', value: entries.length },
+          { label: 'Total USD', value: fmt(totalUsd || null) },
+          { label: 'Total XCD', value: fmt(totalXcd || null, 'EC$') },
         ].map(({ label, value }) => (
           <div key={label} className="rounded border border-gray-200 bg-white px-4 py-3">
             <p className="text-xs text-gray-400">{label}</p>
@@ -257,13 +266,19 @@ function ProviderDetail({
         ))}
       </div>
 
-      {/* Add entry */}
-      {showForm ? (
+      {/* Add / Edit form */}
+      {editingEntry ? (
         <div className="mb-4">
-          <AddEntryForm providers={providers} villas={villas} clients={clients} defaultProviderId={provider.id} onCancel={() => setShowForm(false)} />
+          <EntryForm providers={providers} villas={villas} clients={clients}
+            entry={editingEntry} onCancel={() => setEditingEntry(null)} />
+        </div>
+      ) : showAddForm ? (
+        <div className="mb-4">
+          <EntryForm providers={providers} villas={villas} clients={clients}
+            defaultProviderId={provider.id} onCancel={() => setShowAddForm(false)} />
         </div>
       ) : (
-        <button onClick={() => setShowForm(true)}
+        <button onClick={() => setShowAddForm(true)}
           className="mb-4 flex items-center gap-1.5 text-xs text-[#1f5772] hover:underline">
           <PlusCircle size={13} /> Add Entry
         </button>
@@ -289,8 +304,9 @@ function ProviderDetail({
                   {entries.map(e => {
                     const villa = e.villa_id ? villaById[e.villa_id] : null
                     const isPaid = e.payment_status === 'paid'
+                    const isEditing = editingEntry?.id === e.id
                     return (
-                      <tr key={e.id} className="hover:bg-gray-50">
+                      <tr key={e.id} className={`hover:bg-gray-50 ${isEditing ? 'bg-blue-50' : ''}`}>
                         <td className="px-3 py-2.5 text-xs text-gray-600 whitespace-nowrap">
                           {new Date(e.entry_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
@@ -312,10 +328,16 @@ function ProviderDetail({
                         </td>
                         <td className="px-3 py-2.5 text-xs text-gray-400 max-w-[140px] truncate">{e.notes ?? ''}</td>
                         <td className="px-3 py-2.5">
-                          <button onClick={() => handleDelete(e.id)} disabled={isPending}
-                            className="text-gray-300 hover:text-red-500 transition-colors">
-                            <Trash2 size={13} />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleEditClick(e)} disabled={isPending}
+                              className="text-gray-300 hover:text-[#1f5772] transition-colors">
+                              <Pencil size={13} />
+                            </button>
+                            <button onClick={() => handleDelete(e.id)} disabled={isPending}
+                              className="text-gray-300 hover:text-red-500 transition-colors">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -348,10 +370,16 @@ function ProviderDetail({
                           {e.commission_xcd ? ` · ${fmt(e.commission_xcd, 'EC$')}` : ''}
                         </p>
                       </div>
-                      <button onClick={() => handleDelete(e.id)} disabled={isPending}
-                        className="shrink-0 text-gray-300 hover:text-red-500 transition-colors">
-                        <Trash2 size={13} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleEditClick(e)} disabled={isPending}
+                          className="shrink-0 text-gray-300 hover:text-[#1f5772] transition-colors">
+                          <Pencil size={13} />
+                        </button>
+                        <button onClick={() => handleDelete(e.id)} disabled={isPending}
+                          className="shrink-0 text-gray-300 hover:text-red-500 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </li>
                 )
@@ -390,7 +418,6 @@ export default function CommissionsClient({
   const monthEntries = entries.filter(e => entryMonth(e) === mk)
 
   const providerById = Object.fromEntries(providers.map(p => [p.id, p]))
-  const villaById = Object.fromEntries(villas.map(v => [v.id, v]))
 
   // If a provider is selected, show detail view
   const selectedProvider = selectedProviderId ? providerById[selectedProviderId] : null
@@ -456,7 +483,7 @@ export default function CommissionsClient({
       </div>
 
       {showForm && (
-        <AddEntryForm providers={providers} villas={villas} clients={clients} onCancel={() => { setShowForm(false); router.refresh() }} />
+        <EntryForm providers={providers} villas={villas} clients={clients} onCancel={() => { setShowForm(false); router.refresh() }} />
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
