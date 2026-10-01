@@ -54,7 +54,7 @@ export default function AdminNav({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-0.5">
           {links.map(({ href, label, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href)
