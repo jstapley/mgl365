@@ -15,24 +15,35 @@ async function getClient(id: string): Promise<Client> {
 
 async function getClientBookings(clientId: string) {
   const supabase = getServiceSupabase()
-  const { data } = await supabase
-    .from('bookings')
-    .select(`
-      id, check_in, check_out, status, total_amount,
-      villa:villas(id, name),
-      onboarding_submissions(
-        id, submitted_at, agreed_to_liability,
+
+  const [{ data: bookings }, { data: submissions }] = await Promise.all([
+    supabase
+      .from('bookings')
+      .select('id, check_in, check_out, status, total_amount, villa:villas(id, name)')
+      .eq('client_id', clientId)
+      .order('check_in', { ascending: false }),
+    supabase
+      .from('onboarding_submissions')
+      .select(`
+        id, booking_id, submitted_at, agreed_to_liability,
         liability_signed_name, liability_signed_date,
         liability_signature, liability_content_snapshot,
         interest_spa, interest_tours, interest_wine,
         interest_transport, interest_chef, interest_provisioning,
         selected_activities, num_guests, arrival_flight, arrival_datetime,
         departure_flight, departure_datetime, guest_notes
-      )
-    `)
-    .eq('client_id', clientId)
-    .order('check_in', { ascending: false })
-  return data ?? []
+      `)
+      .eq('client_id', clientId),
+  ])
+
+  const subByBookingId = Object.fromEntries(
+    (submissions ?? []).map((s) => [s.booking_id, s])
+  )
+
+  return (bookings ?? []).map((b) => ({
+    ...b,
+    onboarding_submissions: subByBookingId[b.id] ? [subByBookingId[b.id]] : [],
+  }))
 }
 
 const STATUS_STYLES: Record<string, string> = {
