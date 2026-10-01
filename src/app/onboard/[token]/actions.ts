@@ -75,7 +75,7 @@ async function sendOnboardingCompleteEmail(bookingId: string) {
   })
 }
 
-export async function submitOnboarding(token: string, formData: FormData) {
+export async function submitOnboarding(token: string, formData: FormData): Promise<{ error: string } | void> {
   const supabase = getServiceSupabase()
 
   // Get booking by token (include villa for liability snapshot)
@@ -143,13 +143,20 @@ export async function submitOnboarding(token: string, formData: FormData) {
     { onConflict: 'booking_id' }
   )
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[submitOnboarding] upsert error:', error.message, error.details, error.hint)
+    return { error: 'Something went wrong saving your information. Please try again or contact us directly at info@mgl365antigua.com.' }
+  }
 
   // Mark booking confirmed and record completion timestamp
-  await supabase
+  const { error: bookingError } = await supabase
     .from('bookings')
     .update({ status: 'confirmed', onboarding_completed_at: new Date().toISOString() })
     .eq('id', booking.id)
+
+  if (bookingError) {
+    console.error('[submitOnboarding] booking update error:', bookingError.message)
+  }
 
   // Notify management
   await sendOnboardingCompleteEmail(booking.id).catch(console.error)

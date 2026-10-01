@@ -86,6 +86,7 @@ const TOTAL_STEPS = 1 + SERVICE_STEPS.length + 1 // arrival + 6 services + notes
 export default function OnboardWizard({ token, booking, liabilityContent, activities }: Props) {
   const [step, setStep] = useState(0)
   const [isPending, startTransition] = useTransition()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Step 0 fields
   const [numGuests, setNumGuests] = useState('')
@@ -179,6 +180,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
   }
 
   function handleSubmit() {
+    setSubmitError(null)
     startTransition(async () => {
       const fd = new FormData()
       if (numGuests) fd.append('num_guests', numGuests)
@@ -221,7 +223,8 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
         if (chefSpecialEventDesc) fd.append('chef_special_event_desc', chefSpecialEventDesc)
       }
       fd.append('guest_notes', guestNotes)
-      await submitOnboarding(token, fd)
+      const result = await submitOnboarding(token, fd)
+      if (result?.error) setSubmitError(result.error)
     })
   }
 
@@ -749,6 +752,13 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
             >
               {isPending ? 'Submitting…' : 'Submit Pre-Arrival Information'}
             </button>
+          </div>
+          {submitError && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p className="font-medium mb-0.5">Something went wrong</p>
+              <p>{submitError}</p>
+            </div>
+          )}
           </div>
 
           <p className="text-center text-xs text-gray-400">
