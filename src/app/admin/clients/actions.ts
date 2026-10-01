@@ -31,3 +31,11 @@ export async function updateClient(id: string, formData: FormData) {
   revalidatePath('/admin/clients')
   redirect(`/admin/clients/${id}`)
 }
+
+export async function deleteClient(id: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/clients')
+  redirect('/admin/clients')
+}

@@ -4,6 +4,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { updateClient } from '../actions'
 import type { Client } from '@/types'
 import { CheckCircle, XCircle, ClipboardList } from 'lucide-react'
+import DeleteClientButton from './DeleteClientButton'
 
 async function getClient(id: string): Promise<Client> {
   const supabase = getServiceSupabase()
@@ -103,9 +104,12 @@ export default async function ClientDetailPage({
             <label className="mb-1 block text-xs font-medium text-gray-700">Notes</label>
             <textarea name="notes" rows={3} defaultValue={client.notes ?? ''} className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]" />
           </div>
-          <button type="submit" className="rounded bg-[#1f5772] px-4 py-2 text-sm font-medium text-white hover:bg-[#174560]">
-            Save Changes
-          </button>
+          <div className="flex items-center justify-between">
+            <button type="submit" className="rounded bg-[#1f5772] px-4 py-2 text-sm font-medium text-white hover:bg-[#174560]">
+              Save Changes
+            </button>
+            <DeleteClientButton id={id} name={client.name} />
+          </div>
         </form>
 
         {/* Col 2 — Bookings */}
