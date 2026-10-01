@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getServiceSupabase } from '@/lib/supabase'
-import BookingStatusBadge from '@/components/admin/BookingStatusBadge'
-import type { Booking, BookingStatus } from '@/types'
+import type { Booking } from '@/types'
+import BookingsClient from './BookingsClient'
 
 async function getBookings(): Promise<Booking[]> {
   const supabase = getServiceSupabase()
@@ -27,48 +27,7 @@ export default async function BookingsPage() {
           Add Booking
         </Link>
       </div>
-
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Client</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Villa</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Check-in</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Check-out</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Total</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {bookings.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No bookings yet.</td>
-              </tr>
-            )}
-            {bookings.map((b) => (
-              <tr key={b.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">{b.client?.name ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{b.villa?.name ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{b.check_in}</td>
-                <td className="px-4 py-3 text-gray-600">{b.check_out}</td>
-                <td className="px-4 py-3">
-                  <BookingStatusBadge status={b.status as BookingStatus} />
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {b.total_amount != null ? `$${b.total_amount.toLocaleString()}` : '—'}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/bookings/${b.id}`} className="text-[#1f5772] hover:underline">
-                    View
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <BookingsClient bookings={bookings} />
     </div>
   )
 }
