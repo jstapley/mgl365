@@ -759,7 +759,6 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
               <p>{submitError}</p>
             </div>
           )}
-          </div>
 
           <p className="text-center text-xs text-gray-400">
             Having trouble? Contact Jamie at{' '}
