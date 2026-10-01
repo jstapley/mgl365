@@ -30,6 +30,20 @@ function formatDate(dateStr: string): string {
   })
 }
 
+async function fetchWineListAttachment(): Promise<{ filename: string; content: Buffer } | null> {
+  const url = process.env.WINE_LIST_PDF_URL
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) { console.error('[fetchWineList] fetch failed:', res.status); return null }
+    const buffer = Buffer.from(await res.arrayBuffer())
+    return { filename: 'MGL365 Wine List.pdf', content: buffer }
+  } catch (e) {
+    console.error('[fetchWineList] error:', e)
+    return null
+  }
+}
+
 async function sendReminderEmail(
   booking: any,
   tmpl: any,
@@ -73,13 +87,16 @@ async function sendReminderEmail(
     </div>
   `
 
+  const wineList = await fetchWineListAttachment()
+
   const { error } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
     to: client.email,
     cc: 'mgl365management@gmail.com',
-    replyTo: 'mgl365management@gmail.com',
+    replyTo: 'mgl365antigua.com',
     subject,
     html: bodyHtml,
+    ...(wineList ? { attachments: [wineList] } : {}),
   })
 
   if (error) return `resend error: ${JSON.stringify(error)}`

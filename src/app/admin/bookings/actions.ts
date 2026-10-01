@@ -15,6 +15,20 @@ function applyTemplate(template: string, vars: Record<string, string>) {
   )
 }
 
+async function fetchWineListAttachment(): Promise<{ filename: string; content: Buffer } | null> {
+  const url = process.env.WINE_LIST_PDF_URL
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) { console.error('[fetchWineList] fetch failed:', res.status); return null }
+    const buffer = Buffer.from(await res.arrayBuffer())
+    return { filename: 'MGL365 Wine List.pdf', content: buffer }
+  } catch (e) {
+    console.error('[fetchWineList] error:', e)
+    return null
+  }
+}
+
 async function sendBookingEmail(bookingId: string): Promise<string> {
   const supabase = getServiceSupabase()
 
@@ -75,6 +89,8 @@ async function sendBookingEmail(bookingId: string): Promise<string> {
     </div>
   `
 
+  const wineList = await fetchWineListAttachment()
+
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
     to: client.email,
@@ -82,6 +98,7 @@ async function sendBookingEmail(bookingId: string): Promise<string> {
     replyTo: 'mgl365management@gmail.com',
     subject,
     html: bodyHtml,
+    ...(wineList ? { attachments: [wineList] } : {}),
   })
   if (emailError) return `Resend error: ${JSON.stringify(emailError)}`
   return `OK:${emailData?.id}`
