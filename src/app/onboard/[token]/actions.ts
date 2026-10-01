@@ -149,13 +149,13 @@ export async function submitOnboarding(token: string, formData: FormData): Promi
   }
 
   // Mark booking confirmed and record completion timestamp
-  const { error: bookingError } = await supabase
+  const { error: statusError } = await supabase
     .from('bookings')
     .update({ status: 'confirmed', onboarding_completed_at: new Date().toISOString() })
     .eq('id', booking.id)
 
-  if (bookingError) {
-    console.error('[submitOnboarding] booking update error:', bookingError.message)
+  if (statusError) {
+    console.error('[submitOnboarding] booking update error:', statusError.message)
   }
 
   // Notify management
