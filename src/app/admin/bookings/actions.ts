@@ -82,7 +82,7 @@ async function sendBookingEmail(bookingId: string): Promise<string> {
         <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText.replace(bookingLink, `<a href="${bookingLink}" style="color: #1f5772;">${bookingLink}</a>`)}</div>
         <div style="margin-top: 32px; text-align: center;">
           <a href="${bookingLink}" style="display: inline-block; background: #1f5772; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
-            View Your Booking
+            Complete Your Onboarding
           </a>
         </div>
       </div>
