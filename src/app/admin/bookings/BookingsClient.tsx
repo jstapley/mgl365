@@ -19,18 +19,32 @@ function formatDate(dateStr: string) {
   })
 }
 
+function sortBookings(list: Booking[]): Booking[] {
+  const today = new Date().toISOString().slice(0, 10)
+  return [...list].sort((a, b) => {
+    const aUpcoming = a.check_in >= today
+    const bUpcoming = b.check_in >= today
+    if (aUpcoming && !bUpcoming) return -1
+    if (!aUpcoming && bUpcoming) return 1
+    if (aUpcoming && bUpcoming) return a.check_in.localeCompare(b.check_in) // soonest first
+    return b.check_in.localeCompare(a.check_in) // most recent past first
+  })
+}
+
 export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
   const [query, setQuery] = useState('')
 
   const q = query.trim().toLowerCase()
-  const filtered = q
-    ? bookings.filter(b =>
-        b.client?.name.toLowerCase().includes(q) ||
-        b.villa?.name.toLowerCase().includes(q) ||
-        b.check_in.includes(q) ||
-        b.check_out.includes(q)
-      )
-    : bookings
+  const filtered = sortBookings(
+    q
+      ? bookings.filter(b =>
+          b.client?.name.toLowerCase().includes(q) ||
+          b.villa?.name.toLowerCase().includes(q) ||
+          b.check_in.includes(q) ||
+          b.check_out.includes(q)
+        )
+      : bookings
+  )
 
   return (
     <>
