@@ -247,7 +247,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
               <span>
                 Check-in:{' '}
                 <span className="font-medium text-gray-700">
-                  {new Date(booking.check_in).toLocaleDateString('en-US', {
+                  {new Date(booking.check_in + 'T12:00:00').toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'long',
                     day: 'numeric',
@@ -260,7 +260,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
               <span>
                 Check-out:{' '}
                 <span className="font-medium text-gray-700">
-                  {new Date(booking.check_out).toLocaleDateString('en-US', {
+                  {new Date(booking.check_out + 'T12:00:00').toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'long',
                     day: 'numeric',
