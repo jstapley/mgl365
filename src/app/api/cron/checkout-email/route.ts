@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
           <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaName}</p>
         </div>
         <div style="padding: 0 32px;">
-          <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText}</div>
+          ${bodyText.split(/\n\n+/).map(p => `<p style="margin: 0 0 14px 0; font-size: 14px; line-height: 1.8;">${p.replace(/\n/g, '<br>')}</p>`).join('')}
           ${reviewButtonHtml}
           <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 24px;">
             <p style="font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 12px;">Your Booking Details</p>

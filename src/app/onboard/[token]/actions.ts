@@ -55,7 +55,7 @@ async function sendOnboardingCompleteEmail(bookingId: string) {
         <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">Onboarding Complete — ${villaName}</p>
       </div>
       <div style="padding: 0 32px 32px;">
-        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText.replace(adminLink, `<a href="${adminLink}" style="color: #1f5772;">${adminLink}</a>`)}</div>
+        ${bodyText.replace(adminLink, `<a href="${adminLink}" style="color: #1f5772;">${adminLink}</a>`).split(/\n\n+/).map(p => `<p style="margin: 0 0 14px 0; font-size: 14px; line-height: 1.8;">${p.replace(/\n/g, '<br>')}</p>`).join('')}
         <div style="margin-top: 32px; text-align: center;">
           <a href="${adminLink}" style="display: inline-block; background: #1f5772; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
             View Booking

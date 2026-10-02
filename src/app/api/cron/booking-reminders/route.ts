@@ -70,6 +70,12 @@ async function sendReminderEmail(
   const subject = applyTemplate(tmpl.subject, vars)
   const bodyText = applyTemplate(tmpl.body, vars)
 
+  const bodyHtmlContent = bodyText
+    .replace(bookingLink, `<a href="${bookingLink}" style="color: #1f5772;">${bookingLink}</a>`)
+    .split(/\n\n+/)
+    .map(para => `<p style="margin: 0 0 14px 0; font-size: 14px; line-height: 1.8;">${para.replace(/\n/g, '<br>')}</p>`)
+    .join('')
+
   const bodyHtml = `
     <div style="font-family: sans-serif; max-width: 600px; color: #333;">
       <div style="background: #1c4f6a; padding: 24px 32px; margin-bottom: 24px;">
@@ -77,7 +83,7 @@ async function sendReminderEmail(
         <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaName}</p>
       </div>
       <div style="padding: 0 32px 32px;">
-        <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${bodyText.replace(bookingLink, `<a href="${bookingLink}" style="color: #1f5772;">${bookingLink}</a>`)}</div>
+        ${bodyHtmlContent}
         <div style="margin-top: 32px; text-align: center;">
           <a href="${bookingLink}" style="display: inline-block; background: #1f5772; color: white; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;">
             Complete Your Onboarding
