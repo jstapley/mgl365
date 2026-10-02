@@ -285,10 +285,12 @@ export async function resendCompletedEmail(id: string): Promise<string> {
   return result
 }
 
-export async function deleteBooking(id: string) {
+export async function deleteBooking(id: string): Promise<string | null> {
   const supabase = getServiceSupabase()
+  // Delete related records first to avoid FK constraint errors
+  await supabase.from('onboarding_submissions').delete().eq('booking_id', id)
   const { error } = await supabase.from('bookings').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  if (error) return error.message
   revalidatePath('/admin/bookings')
   redirect('/admin/bookings')
 }
