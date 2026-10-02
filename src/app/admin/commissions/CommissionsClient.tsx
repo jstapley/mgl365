@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { PlusCircle, Trash2, ChevronLeft, Pencil } from 'lucide-react'
 import { createEntry, updateEntry, updatePaymentStatus, deleteEntry } from './actions'
 import { useRouter } from 'next/navigation'
@@ -384,6 +384,8 @@ function ProviderDetail({
 
 const VILLA_ORDER = ['Cool House', 'Water Edge', 'Starfish Lower', 'Starfish Upper']
 
+type FilterMode = 'monthly' | 'ytd' | 'custom'
+
 export default function CommissionsClient({
   providers,
   villas,
@@ -398,12 +400,29 @@ export default function CommissionsClient({
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
+  const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const router = useRouter()
 
+  const today = now.toISOString().slice(0, 10)
   const mk = monthKey(year, month)
-  const monthEntries = entries.filter(e => entryMonth(e) === mk)
+
+  const filteredEntries = useMemo(() => {
+    if (filterMode === 'monthly') return entries.filter(e => entryMonth(e) === mk)
+    if (filterMode === 'ytd') return entries.filter(e => e.entry_date >= `${year}-01-01` && e.entry_date <= today)
+    if (customFrom && customTo) return entries.filter(e => e.entry_date >= customFrom && e.entry_date <= customTo)
+    return []
+  }, [entries, filterMode, mk, year, today, customFrom, customTo])
+
+  const filterLabel = useMemo(() => {
+    if (filterMode === 'monthly') return `${MONTH_NAMES[month - 1]} ${year}`
+    if (filterMode === 'ytd') return `YTD ${year}`
+    if (customFrom && customTo) return `${customFrom} to ${customTo}`
+    return 'Custom Range'
+  }, [filterMode, month, year, customFrom, customTo])
 
   const providerById = Object.fromEntries(providers.map(p => [p.id, p]))
 
@@ -423,9 +442,9 @@ export default function CommissionsClient({
     )
   }
 
-  // Provider summary rows for this month
+  // Provider summary rows for filtered period
   const providerStats = providers.map(p => {
-    const pe = monthEntries.filter(e => e.provider_id === p.id)
+    const pe = filteredEntries.filter(e => e.provider_id === p.id)
     return {
       ...p,
       jobs: pe.length,
@@ -434,11 +453,11 @@ export default function CommissionsClient({
     }
   })
 
-  // Villa breakdown for this month
+  // Villa breakdown for filtered period
   const villaStats = VILLA_ORDER.map(name => {
     const v = villas.find(v => v.name === name)
     if (!v) return null
-    const ve = monthEntries.filter(e => e.villa_id === v.id)
+    const ve = filteredEntries.filter(e => e.villa_id === v.id)
     return {
       short: VILLA_SHORT[name] ?? name,
       jobs: ve.length,
@@ -453,19 +472,57 @@ export default function CommissionsClient({
 
   return (
     <div className="space-y-5">
-      {/* Month selector */}
-      <div className="flex flex-wrap items-center gap-3">
-        <select value={month} onChange={e => setMonth(Number(e.target.value))}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
-          {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-        </select>
-        <select value={year} onChange={e => setYear(Number(e.target.value))}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
-          {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y =>
-            <option key={y}>{y}</option>)}
-        </select>
+      {/* Date filter */}
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex flex-wrap gap-2 flex-1">
+          {/* Mode toggles */}
+          <div className="flex rounded border border-gray-200 bg-white overflow-hidden text-xs font-medium">
+            {(['monthly', 'ytd', 'custom'] as FilterMode[]).map(mode => (
+              <button key={mode} onClick={() => setFilterMode(mode)}
+                className={`px-3 py-1.5 transition-colors ${filterMode === mode ? 'bg-[#1f5772] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                {mode === 'monthly' ? 'Monthly' : mode === 'ytd' ? 'YTD' : 'Custom'}
+              </button>
+            ))}
+          </div>
+
+          {/* Monthly controls */}
+          {filterMode === 'monthly' && (
+            <div className="flex gap-2">
+              <select value={month} onChange={e => setMonth(Number(e.target.value))}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
+                {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+              <select value={year} onChange={e => setYear(Number(e.target.value))}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
+                {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y =>
+                  <option key={y}>{y}</option>)}
+              </select>
+            </div>
+          )}
+
+          {/* YTD controls */}
+          {filterMode === 'ytd' && (
+            <select value={year} onChange={e => setYear(Number(e.target.value))}
+              className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
+              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y =>
+                <option key={y}>{y}</option>)}
+            </select>
+          )}
+
+          {/* Custom range controls */}
+          {filterMode === 'custom' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
+              <span className="text-xs text-gray-400">to</span>
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
+            </div>
+          )}
+        </div>
+
         <button onClick={() => setShowForm(v => !v)}
-          className="ml-auto flex items-center gap-1.5 rounded bg-[#1f5772] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#174560]">
+          className="flex items-center gap-1.5 rounded bg-[#1f5772] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#174560]">
           <PlusCircle size={13} /> Add Entry
         </button>
       </div>
@@ -479,7 +536,7 @@ export default function CommissionsClient({
         <div className="lg:col-span-2 overflow-hidden rounded border border-gray-200 bg-white">
           <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Provider Summary — {MONTH_NAMES[month - 1]} {year}
+              Provider Summary — {filterLabel}
             </p>
           </div>
           <table className="w-full text-sm">
