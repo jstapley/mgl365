@@ -11,22 +11,19 @@ interface Props {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-// Match the Google Calendar colors from the screenshot
-const VILLA_COLORS: Record<string, { bg: string; bar: string; dot: string; text: string }> = {
-  'Cool House':            { bg: 'bg-red-100',    bar: 'bg-red-500',    dot: 'bg-red-500',    text: 'text-red-700'    },
-  'Starfish House Lower':  { bg: 'bg-purple-100', bar: 'bg-purple-700', dot: 'bg-purple-700', text: 'text-purple-800' },
-  'Starfish House Upper':  { bg: 'bg-violet-100', bar: 'bg-violet-400', dot: 'bg-violet-400', text: 'text-violet-700' },
-  'Water Edge':            { bg: 'bg-blue-100',   bar: 'bg-blue-600',   dot: 'bg-blue-600',   text: 'text-blue-800'  },
+const VILLA_COLORS: Record<string, string> = {
+  'Cool House':           'bg-red-500',
+  'Starfish House Lower': 'bg-purple-700',
+  'Starfish House Upper': 'bg-violet-400',
+  'Water Edge':           'bg-blue-600',
+}
+const FALLBACKS = ['bg-emerald-500', 'bg-orange-500']
+
+function getColor(villaName: string, idx: number) {
+  return VILLA_COLORS[villaName] ?? FALLBACKS[idx % FALLBACKS.length]
 }
 
-const FALLBACK_COLORS = [
-  { bg: 'bg-emerald-100', bar: 'bg-emerald-500', dot: 'bg-emerald-500', text: 'text-emerald-700' },
-  { bg: 'bg-orange-100',  bar: 'bg-orange-500',  dot: 'bg-orange-500',  text: 'text-orange-700'  },
-]
-
-function getColor(villaName: string, index: number) {
-  return VILLA_COLORS[villaName] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-}
+function pad(n: number) { return String(n).padStart(2, '0') }
 
 export default function CalendarViewMulti({ villas, bookings }: Props) {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -34,26 +31,24 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
     return new Date(d.getFullYear(), d.getMonth(), 1)
   })
 
-  const year = currentDate.getFullYear()
+  const year  = currentDate.getFullYear()
   const month = currentDate.getMonth()
-  const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthLabel  = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const startOffset = new Date(year, month, 1).getDay()
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr    = new Date().toISOString().slice(0, 10)
 
-  function pad(n: number) { return String(n).padStart(2, '0') }
   function prevMonth() { setCurrentDate(new Date(year, month - 1, 1)) }
   function nextMonth() { setCurrentDate(new Date(year, month + 1, 1)) }
 
-  // For each villa, map dateStr → booking
+  // Map villa index → dateStr → booking
   const villaBookingMaps = useMemo(() => {
     return villas.map(villa => {
       const map = new Map<string, Booking>()
-      const vb = bookings.filter(b => b.villa_id === villa.id && b.status !== 'cancelled')
-      for (const b of vb) {
-        const start = new Date(b.check_in + 'T00:00:00')
-        const end   = new Date(b.check_out + 'T00:00:00')
-        const cur   = new Date(start)
+      for (const b of bookings) {
+        if (b.villa_id !== villa.id || b.status === 'cancelled') continue
+        const cur = new Date(b.check_in + 'T00:00:00')
+        const end = new Date(b.check_out + 'T00:00:00')
         while (cur < end) {
           map.set(cur.toISOString().slice(0, 10), b)
           cur.setDate(cur.getDate() + 1)
@@ -63,38 +58,81 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
     })
   }, [villas, bookings])
 
-  // For each day, collect which villas have bookings and their metadata
-  const days = useMemo(() => {
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1
-      const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`
-      const dayOfWeek = new Date(year, month, day).getDay() // 0 = Sun
-      const villaEntries = villas.map((villa, idx) => {
-        const booking = villaBookingMaps[idx].get(dateStr)
-        if (!booking) return null
-        const isBookingStart = booking.check_in === dateStr
-        // First day this booking is visible in the current month view
-        const firstVisibleDate = booking.check_in > `${year}-${pad(month + 1)}-01`
-          ? booking.check_in
-          : `${year}-${pad(month + 1)}-01`
-        const isFirstVisible = dateStr === firstVisibleDate
-        // Show label on first visible day OR start of each new week row
-        const showLabel = isFirstVisible || dayOfWeek === 0
-        const isLast  = (() => {
-          const [y, m, d] = booking.check_out.split('-').map(Number)
-          const prevDay = new Date(y, m - 1, d - 1).toISOString().slice(0, 10)
-          return prevDay === dateStr
-        })()
-        return { villa, booking, isBookingStart, showLabel, isLast, color: getColor(villa.name, idx) }
-      }).filter(Boolean) as { villa: Villa; booking: Booking; isBookingStart: boolean; showLabel: boolean; isLast: boolean; color: (typeof VILLA_COLORS)[string] }[]
+  // Build flat list of cells (nulls for padding, then actual days)
+  const cells = useMemo(() => {
+    const all: { day: number | null; dateStr: string | null }[] = []
+    for (let i = 0; i < startOffset; i++) all.push({ day: null, dateStr: null })
+    for (let d = 1; d <= daysInMonth; d++) {
+      all.push({ day: d, dateStr: `${year}-${pad(month + 1)}-${pad(d)}` })
+    }
+    while (all.length % 7 !== 0) all.push({ day: null, dateStr: null })
+    return all
+  }, [startOffset, daysInMonth, year, month])
 
-      return { day, dateStr, dayOfWeek, villaEntries }
-    })
-  }, [daysInMonth, year, month, villas, villaBookingMaps])
+  // Split into weeks
+  const weeks = useMemo(() => {
+    const ws = []
+    for (let i = 0; i < cells.length; i += 7) ws.push(cells.slice(i, i + 7))
+    return ws
+  }, [cells])
+
+  // For a given villa + week, compute bar segments (grouped spans)
+  function getWeekSegments(villaIdx: number, week: typeof weeks[0]) {
+    const map = villaBookingMaps[villaIdx]
+    const segments: {
+      booking: Booking | null
+      span: number
+      isStart: boolean
+      isEnd: boolean
+      showLabel: boolean
+      colStart: number // 1-based column in the 7-col grid
+    }[] = []
+
+    let i = 0
+    while (i < 7) {
+      const cell = week[i]
+      const booking = cell.dateStr ? (map.get(cell.dateStr) ?? null) : null
+
+      if (!booking) {
+        // merge consecutive empty cells
+        let span = 1
+        while (i + span < 7) {
+          const next = week[i + span]
+          const nb = next.dateStr ? (map.get(next.dateStr) ?? null) : null
+          if (nb) break
+          span++
+        }
+        segments.push({ booking: null, span, isStart: false, isEnd: false, showLabel: false, colStart: i + 1 })
+        i += span
+        continue
+      }
+
+      // Count how far this booking spans in this week
+      let span = 1
+      while (i + span < 7) {
+        const next = week[i + span]
+        const nb = next.dateStr ? (map.get(next.dateStr) ?? null) : null
+        if (nb?.id !== booking.id) break
+        span++
+      }
+
+      const isStart   = booking.check_in === cell.dateStr
+      const lastDate  = week[i + span - 1].dateStr
+      const [ey, em, ed] = booking.check_out.split('-').map(Number)
+      const dayBeforeCheckout = new Date(ey, em - 1, ed - 1).toISOString().slice(0, 10)
+      const isEnd     = lastDate === dayBeforeCheckout
+      // Show label on booking start OR first day in this week row
+      const showLabel = isStart || i === 0
+
+      segments.push({ booking, span, isStart, isEnd, showLabel, colStart: i + 1 })
+      i += span
+    }
+    return segments
+  }
 
   return (
     <div>
-      {/* Month navigation */}
+      {/* Month nav */}
       <div className="mb-4 flex items-center justify-between">
         <button onClick={prevMonth} className="rounded border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
           ← Prev
@@ -105,80 +143,80 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
         </button>
       </div>
 
-      {/* Calendar grid */}
+      {/* Calendar */}
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         {/* Day headers */}
         <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
-          {DAYS.map((d) => (
+          {DAYS.map(d => (
             <div key={d} className="py-2 text-center text-xs font-medium text-gray-400">{d}</div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7">
-          {/* Empty cells before month start */}
-          {Array.from({ length: startOffset }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[110px] border-b border-r border-gray-100 bg-gray-50/40" />
-          ))}
+        {/* Week rows */}
+        {weeks.map((week, wi) => (
+          <div key={wi} className="border-b border-gray-100">
+            {/* Day numbers */}
+            <div className="grid grid-cols-7">
+              {week.map((cell, ci) => (
+                <div key={ci} className="h-8 border-r border-gray-100 p-1.5 last:border-r-0">
+                  {cell.day && (
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                      cell.dateStr === todayStr ? 'bg-[#1f5772] text-white' : 'text-gray-500'
+                    }`}>
+                      {cell.day}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
 
-          {days.map(({ day, dateStr, villaEntries }) => {
-            const isToday = dateStr === todayStr
-            return (
-              <div key={day} className="relative min-h-[110px] border-b border-r border-gray-100 p-1.5">
-                {/* Day number */}
-                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                  isToday ? 'bg-[#1f5772] text-white' : 'text-gray-500'
-                }`}>
-                  {day}
-                </span>
-
-                {/* Booking bars — one per villa */}
-                <div className="mt-1 space-y-0.5">
-                  {villas.map((villa, idx) => {
-                    const entry = villaEntries.find(e => e.villa.id === villa.id)
-                    if (!entry) return <div key={villa.id} className="h-6" />
-                    const { booking, isBookingStart, showLabel, isLast, color } = entry
+            {/* One bar row per villa */}
+            {villas.map((villa, vidx) => {
+              const segments = getWeekSegments(vidx, week)
+              const color = getColor(villa.name, vidx)
+              return (
+                <div key={villa.id} className="grid grid-cols-7 h-7 px-0.5 mb-0.5">
+                  {segments.map((seg, si) => {
+                    const colSpanStyle = { gridColumn: `span ${seg.span}` }
+                    if (!seg.booking) {
+                      return <div key={si} style={colSpanStyle} />
+                    }
                     return (
                       <Link
-                        key={villa.id}
-                        href={`/admin/bookings/${booking.id}`}
-                        title={`${villa.name} — ${booking.client?.name ?? 'Guest'} (${booking.status})`}
-                        className={`flex h-6 items-center gap-1 overflow-hidden leading-none transition-opacity hover:opacity-80
-                          ${color.bar} text-white
-                          ${isBookingStart ? 'rounded-l-full pl-2' : 'pl-1.5'}
-                          ${isLast        ? 'rounded-r-full pr-1' : 'pr-0'}
+                        key={si}
+                        href={`/admin/bookings/${seg.booking.id}`}
+                        title={`${villa.name} — ${seg.booking.client?.name ?? 'Guest'} (${seg.booking.status})`}
+                        style={colSpanStyle}
+                        className={`flex h-6 items-center overflow-hidden px-2 text-white transition-opacity hover:opacity-80
+                          ${color}
+                          ${seg.isStart ? 'rounded-l-full ml-0.5' : ''}
+                          ${seg.isEnd   ? 'rounded-r-full mr-0.5' : ''}
                         `}
                       >
-                        {showLabel && (
-                          <span className="flex items-baseline gap-1 truncate whitespace-nowrap">
-                            <span className="text-[10px] font-semibold truncate">
-                              {booking.client?.name ?? 'Guest'}
-                            </span>
-                            <span className="text-[9px] opacity-75 capitalize shrink-0">
-                              · {booking.status}
-                            </span>
+                        {seg.showLabel && (
+                          <span className="truncate whitespace-nowrap text-[10px] font-semibold">
+                            {seg.booking.client?.name ?? 'Guest'}
+                            <span className="ml-1 font-normal opacity-80 capitalize">· {seg.booking.status}</span>
                           </span>
                         )}
                       </Link>
                     )
                   })}
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Legend */}
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-600">
-        {villas.map((villa, idx) => {
-          const color = getColor(villa.name, idx)
-          return (
-            <div key={villa.id} className="flex items-center gap-1.5">
-              <div className={`h-3 w-6 rounded-full ${color.bar}`} />
-              <span>{villa.name}</span>
-            </div>
-          )
-        })}
+        {villas.map((villa, idx) => (
+          <div key={villa.id} className="flex items-center gap-1.5">
+            <div className={`h-3 w-6 rounded-full ${getColor(villa.name, idx)}`} />
+            <span>{villa.name}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
