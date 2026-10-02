@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getServiceSupabase } from '@/lib/supabase'
-import CalendarView from '@/components/admin/CalendarView'
+import CalendarView from '@/components/admin/CalendarViewMulti'
 import type { Villa, Booking } from '@/types'
 
 async function getData() {
