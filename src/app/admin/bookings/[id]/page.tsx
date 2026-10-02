@@ -7,6 +7,7 @@ import ResendEmailButtons from './ResendEmailButton'
 import type { Booking, Villa, Client, BookingStatus } from '@/types'
 import Link from 'next/link'
 import { ClipboardList } from 'lucide-react'
+import DeleteBookingButton from './DeleteBookingButton'
 
 async function getBooking(id: string): Promise<Booking> {
   const supabase = getServiceSupabase()
@@ -111,6 +112,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <EditBookingForm booking={booking} villas={villas} clients={clients} />
+          <div className="mt-3 flex justify-end">
+            <DeleteBookingButton id={id} clientName={booking.client?.name ?? 'this booking'} />
+          </div>
         </div>
 
         {/* Right col — onboarding submission */}

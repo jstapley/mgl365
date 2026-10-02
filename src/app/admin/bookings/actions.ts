@@ -285,6 +285,14 @@ export async function resendCompletedEmail(id: string): Promise<string> {
   return result
 }
 
+export async function deleteBooking(id: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('bookings').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/bookings')
+  redirect('/admin/bookings')
+}
+
 export async function updateBookingStatus(id: string, status: BookingStatus) {
   const supabase = getServiceSupabase()
   const { error } = await supabase.from('bookings').update({ status }).eq('id', id)
