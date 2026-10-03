@@ -119,6 +119,7 @@ export async function submitOnboarding(token: string, formData: FormData): Promi
       liability_content_snapshot: liabilitySnapshot,
       interest_spa: formData.get('interest_spa') === 'on',
       interest_tours: formData.get('interest_tours') === 'on',
+      interest_excursions: formData.get('interest_excursions') === 'on',
       interest_wine: formData.get('interest_wine') === 'on',
       interest_transport: formData.get('interest_transport') === 'on',
       interest_chef: formData.get('interest_chef') === 'on',

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
 import { updateActivity } from '../../actions'
 
-const CATEGORIES = ['Spa', 'Boat Tours', 'Transport', 'Chef', 'Wine', 'Other']
+const CATEGORIES = ['Spa', 'Boat Tours', 'Excursions', 'Transport', 'Chef', 'Wine', 'Other']
 
 async function getActivity(id: string) {
   const supabase = getServiceSupabase()

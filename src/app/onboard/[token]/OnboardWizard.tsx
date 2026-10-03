@@ -45,6 +45,13 @@ const SERVICE_STEPS = [
     category: 'Boat Tours',
   },
   {
+    interestKey: 'interest_excursions',
+    label: 'Excursions',
+    question: 'Would you be interested in any island excursions?',
+    description: 'Beach hopping, turtle adventures, historical tours, hiking, and more around Antigua.',
+    category: 'Excursions',
+  },
+  {
     interestKey: 'interest_wine',
     label: 'Wine List',
     question: 'Would you like access to our curated wine list?',

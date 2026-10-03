@@ -40,7 +40,7 @@ async function getSubmission(bookingId: string) {
       id, submitted_at, agreed_to_liability,
       liability_signed_name, liability_signed_date,
       liability_signature, liability_content_snapshot,
-      interest_spa, interest_tours, interest_wine,
+      interest_spa, interest_tours, interest_excursions, interest_wine,
       interest_transport, interest_chef, interest_provisioning,
       selected_activities, num_guests, arrival_flight, arrival_datetime,
       departure_flight, departure_datetime, guest_notes
@@ -61,6 +61,7 @@ const STATUS_STYLES: Record<string, string> = {
 const INTEREST_LABELS: { key: string; label: string }[] = [
   { key: 'interest_spa',          label: 'Spa Services' },
   { key: 'interest_tours',        label: 'Barefoot Tours' },
+  { key: 'interest_excursions',   label: 'Excursions' },
   { key: 'interest_wine',         label: 'Wine List' },
   { key: 'interest_transport',    label: 'Transport' },
   { key: 'interest_chef',         label: 'Private Chef' },

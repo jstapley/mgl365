@@ -1,6 +1,6 @@
 import { createActivity } from '../actions'
 
-const CATEGORIES = ['Spa', 'Boat Tours', 'Transport', 'Chef', 'Wine', 'Other']
+const CATEGORIES = ['Spa', 'Boat Tours', 'Excursions', 'Transport', 'Chef', 'Wine', 'Other']
 
 export default function NewActivityPage() {
   return (

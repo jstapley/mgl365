@@ -44,7 +44,6 @@ const COOL_HOUSE: InspectionTemplate = {
         { type: 'checkbox', id: 'paddle_board_1', label: '1 Paddle Board' },
         { type: 'checkbox', id: 'paddle_board_2', label: '1 Paddle Board' },
         { type: 'checkbox', id: 'three_single_paddles', label: '3 Single Paddles' },
-        { type: 'checkbox', id: 'one_double_paddle', label: '1 Double Paddle' },
       ],
     },
     {
@@ -53,7 +52,7 @@ const COOL_HOUSE: InspectionTemplate = {
       fields: [
         { type: 'checkbox', id: 'four_navy_plastic', label: '4 Navy Blue Chairs – Plastic Handles' },
         { type: 'checkbox', id: 'five_blue_wooden', label: '5 Blue Chairs – Wooden Handles' },
-        { type: 'checkbox', id: 'three_zero_gravity', label: '3 Black Zero-Gravity Chairs' },
+        { type: 'checkbox', id: 'three_zero_gravity', label: '2 Black Zero-Gravity Chairs' },
       ],
     },
   ],

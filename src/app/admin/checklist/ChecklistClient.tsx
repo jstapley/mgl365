@@ -282,7 +282,7 @@ export default function ChecklistClient({
 
   // Form header state
   const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().slice(0, 10))
-  const [checkedBy, setCheckedBy] = useState('Alex')
+  const [checkedBy, setCheckedBy] = useState('Jamie')
   const [checkedByOther, setCheckedByOther] = useState('')
 
   const template = getTemplate(villaName)
@@ -300,7 +300,7 @@ export default function ChecklistClient({
   function handleStartNew() {
     if (template) setFormValues(initFormValues(template))
     setInspectionDate(new Date().toISOString().slice(0, 10))
-    setCheckedBy('Alex')
+    setCheckedBy('Jamie')
     setCheckedByOther('')
     setView('form')
   }
@@ -424,8 +424,10 @@ export default function ChecklistClient({
               onChange={e => setCheckedBy(e.target.value)}
               className="rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white"
             >
-              <option>Alex</option>
-              <option>Keesha</option>
+              <option>Jamie</option>
+              <option>Michel</option>
+              <option>Luka</option>
+              <option>Jess</option>
               <option>Other</option>
             </select>
           </div>
