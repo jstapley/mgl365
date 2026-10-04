@@ -300,6 +300,12 @@ export async function updateBookingStatus(id: string, status: BookingStatus) {
   const { error } = await supabase.from('bookings').update({ status }).eq('id', id)
   if (error) throw new Error(error.message)
 
+  if (status === 'pending') {
+    const result = await sendBookingEmail(id).catch(String)
+    if (!result.startsWith('OK:')) console.error('[sendBookingEmail]', result)
+    else console.log('[sendBookingEmail] sent OK, id:', result.slice(3))
+  }
+
   if (status === 'completed') {
     const result = await sendCompletedEmail(id).catch(String)
     if (!result.startsWith('OK:')) console.error('[sendCompletedEmail]', result)
