@@ -338,6 +338,9 @@ export async function updateBooking(
     }
   }
 
+  // Fetch current status so the edit form never overwrites it
+  const { data: current } = await supabase.from('bookings').select('status').eq('id', id).single()
+
   const { error } = await supabase.from('bookings').update({
     villa_id: villaId,
     client_id: (formData.get('client_id') as string) || null,
@@ -345,7 +348,7 @@ export async function updateBooking(
     check_out: checkOut,
     guests: formData.get('guests') ? Number(formData.get('guests')) : null,
     package: (formData.get('package') as string) || null,
-    status: formData.get('status') as BookingStatus,
+    status: (current?.status ?? 'pending') as BookingStatus,
     booking_type: (formData.get('booking_type') as string) || 'guest',
     midstay_clean_date: (formData.get('midstay_clean_date') as string) || null,
     booking_platform: (formData.get('booking_platform') as string) || null,

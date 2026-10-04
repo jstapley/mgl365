@@ -86,17 +86,6 @@ export default function EditBookingForm({ booking, villas, clients }: Props) {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700">Status</label>
-          <select name="status" defaultValue={booking.status} className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]">
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="completed">Completed</option>
-            <option value="imported">Imported (no automations)</option>
-          </select>
-        </div>
-
-        <div>
           <label className="mb-1 block text-xs font-medium text-gray-700">Booking Platform</label>
           <select name="booking_platform" defaultValue={booking.booking_platform ?? ''} className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]">
             <option value="">— None —</option>
