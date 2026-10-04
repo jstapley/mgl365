@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
-import { updateBookingStatus } from '../actions'
 import BookingStatusBadge from '@/components/admin/BookingStatusBadge'
 import EditBookingForm from './EditBookingForm'
 import ResendEmailButtons from './ResendEmailButton'
-import type { Booking, Villa, Client, BookingStatus } from '@/types'
+import type { Booking, Villa, Client } from '@/types'
 import Link from 'next/link'
 import { ClipboardList } from 'lucide-react'
 import DeleteBookingButton from './DeleteBookingButton'
+import StatusButtons from './StatusButtons'
 
 async function getBooking(id: string): Promise<Booking> {
   const supabase = getServiceSupabase()
@@ -50,13 +50,6 @@ async function getSubmission(bookingId: string) {
   return data ?? null
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  pending:   'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-600',
-  completed: 'bg-gray-100 text-gray-600',
-  imported:  'bg-blue-100 text-blue-600',
-}
 
 const INTEREST_LABELS: { key: string; label: string }[] = [
   { key: 'interest_spa',          label: 'Spa Services' },
@@ -98,19 +91,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           <ResendEmailButtons bookingId={id} />
 
           {/* Quick status update */}
-          <div className="flex flex-wrap gap-2">
-            {(['pending', 'confirmed', 'cancelled', 'completed'] as BookingStatus[]).map((s) => (
-              <form key={s} action={updateBookingStatus.bind(null, id, s)}>
-                <button
-                  type="submit"
-                  disabled={booking.status === s}
-                  className={`rounded px-3 py-1.5 text-xs font-medium capitalize transition-colors disabled:opacity-40 ${STATUS_STYLES[s]} border border-transparent`}
-                >
-                  Mark {s}
-                </button>
-              </form>
-            ))}
-          </div>
+          <StatusButtons bookingId={id} currentStatus={booking.status} />
 
           <EditBookingForm booking={booking} villas={villas} clients={clients} />
           <div className="mt-3 flex justify-end">
