@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { updateBooking } from '../actions'
 import type { Booking, Villa, Client } from '@/types'
 
@@ -13,6 +13,7 @@ interface Props {
 export default function EditBookingForm({ booking, villas, clients }: Props) {
   const boundAction = updateBooking.bind(null, booking.id)
   const [error, action, isPending] = useActionState(boundAction, null)
+  const [midstayRequired, setMidstayRequired] = useState(!!booking.midstay_clean_date)
 
   return (
     <>
@@ -80,8 +81,23 @@ export default function EditBookingForm({ booking, villas, clients }: Props) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Mid-stay Clean Date</label>
-            <input name="midstay_clean_date" type="date" defaultValue={booking.midstay_clean_date ?? ''} className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]" />
+            <label className="mb-1 block text-xs font-medium text-gray-700">Mid-stay Clean</label>
+            <select
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+              value={midstayRequired ? 'yes' : 'no'}
+              onChange={e => setMidstayRequired(e.target.value === 'yes')}
+            >
+              <option value="no">Not required</option>
+              <option value="yes">Yes — select date</option>
+            </select>
+            {midstayRequired && (
+              <input
+                name="midstay_clean_date"
+                type="date"
+                defaultValue={booking.midstay_clean_date ?? ''}
+                className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+              />
+            )}
           </div>
         </div>
 
