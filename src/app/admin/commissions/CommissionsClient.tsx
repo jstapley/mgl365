@@ -453,6 +453,17 @@ export default function CommissionsClient({
     }
   })
 
+  // Collector breakdown for filtered period
+  const collectorStats = COLLECTORS.map(name => {
+    const ce = filteredEntries.filter(e => e.collected_by === name)
+    return {
+      name,
+      jobs: ce.length,
+      usd: ce.reduce((s, e) => s + (e.commission_usd ?? 0), 0),
+      xcd: ce.reduce((s, e) => s + (e.commission_xcd ?? 0), 0),
+    }
+  })
+
   // Villa breakdown for filtered period
   const villaStats = VILLA_ORDER.map(name => {
     const v = villas.find(v => v.name === name)
@@ -569,29 +580,57 @@ export default function CommissionsClient({
           </table>
         </div>
 
-        {/* Villa breakdown */}
-        <div className="overflow-hidden rounded border border-gray-200 bg-white self-start">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">By Villa</p>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="border-b border-gray-100">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">House</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">USD</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">XCD</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {villaStats.map(v => (
-                <tr key={v.short}>
-                  <td className="px-4 py-2.5 text-xs font-medium text-gray-700">{v.short}</td>
-                  <td className="px-4 py-2.5 text-right text-xs text-gray-600">{v.usd ? fmt(v.usd) : '—'}</td>
-                  <td className="px-4 py-2.5 text-right text-xs text-gray-600">{v.xcd ? fmt(v.xcd, 'EC$') : '—'}</td>
+        {/* Right column — Villa + Collector breakdowns */}
+        <div className="space-y-5">
+          {/* Villa breakdown */}
+          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+            <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">By Villa</p>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">House</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">USD</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">XCD</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {villaStats.map(v => (
+                  <tr key={v.short}>
+                    <td className="px-4 py-2.5 text-xs font-medium text-gray-700">{v.short}</td>
+                    <td className="px-4 py-2.5 text-right text-xs text-gray-600">{v.usd ? fmt(v.usd) : '—'}</td>
+                    <td className="px-4 py-2.5 text-right text-xs text-gray-600">{v.xcd ? fmt(v.xcd, 'EC$') : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Collector breakdown */}
+          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+            <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">By Collector</p>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Collector</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">USD</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">XCD</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {collectorStats.map(c => (
+                  <tr key={c.name}>
+                    <td className="px-4 py-2.5 text-xs font-medium text-gray-700">{c.name}</td>
+                    <td className="px-4 py-2.5 text-right text-xs text-gray-600">{c.usd ? fmt(c.usd) : '—'}</td>
+                    <td className="px-4 py-2.5 text-right text-xs text-gray-600">{c.xcd ? fmt(c.xcd, 'EC$') : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
