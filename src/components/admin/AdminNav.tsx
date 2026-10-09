@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList, MailOpen, X, ListChecks, Sparkles, DollarSign, Link2 } from 'lucide-react'
+import { LayoutDashboard, Building2, Users, CalendarDays, CalendarRange, ConciergeBell, Compass, Mail, Wrench, ClipboardList, MailOpen, X, ListChecks, Sparkles, DollarSign, Link2, PackageSearch } from 'lucide-react'
 import { logout } from '@/app/admin/actions'
 
 const links = [
@@ -17,6 +17,7 @@ const links = [
   { href: '/admin/contact',    label: 'Contact',            icon: Mail,            exact: false },
   { href: '/admin/maintenance', label: 'Maintenance',       icon: Wrench,          exact: false },
   { href: '/admin/checklist',    label: 'Checklist',        icon: ListChecks,      exact: false },
+  { href: '/admin/inventory',    label: 'Inventory',        icon: PackageSearch,   exact: false },
   { href: '/admin/housekeeping',  label: 'Housekeeping',    icon: Sparkles,        exact: false },
   { href: '/admin/commissions',  label: 'Commissions',     icon: DollarSign,      exact: false },
   { href: '/admin/tracking',    label: 'Link Tracker',    icon: Link2,           exact: false },
