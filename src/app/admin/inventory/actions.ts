@@ -5,7 +5,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 
 export async function saveInventoryCheck(
   villaId: string,
-  data: { check_date: string; checked_by: string; linens: string; kitchen: string; other: string }
+  data: { check_date: string; checked_by: string; linens: string; kitchen: string; lightbulbs: string; other: string }
 ): Promise<string | null> {
   const supabase = getServiceSupabase()
 
@@ -15,6 +15,7 @@ export async function saveInventoryCheck(
     checked_by: data.checked_by,
     linens: data.linens || null,
     kitchen: data.kitchen || null,
+    lightbulbs: data.lightbulbs || null,
     other: data.other || null,
   })
   if (error) return error.message

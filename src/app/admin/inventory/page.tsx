@@ -10,6 +10,7 @@ export interface InventoryCheck {
   checked_by: string
   linens: string | null
   kitchen: string | null
+  lightbulbs: string | null
   other: string | null
   created_at: string
 }

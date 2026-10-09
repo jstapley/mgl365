@@ -2,16 +2,17 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { PlusCircle, ChevronLeft, Trash2 } from 'lucide-react'
+import { PlusCircle, ChevronLeft, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { saveInventoryCheck, deleteInventoryCheck } from './actions'
 import type { InventoryCheck } from './page'
 
 const INSPECTORS = ['Jamie', 'Michel', 'Luka', 'Jess', 'Other']
 
-const SECTIONS: { key: keyof Pick<InventoryCheck, 'linens' | 'kitchen' | 'other'>; label: string }[] = [
-  { key: 'linens',   label: 'Linens' },
-  { key: 'kitchen',  label: 'Kitchen' },
-  { key: 'other',    label: 'Other' },
+const SECTIONS: { key: keyof Pick<InventoryCheck, 'linens' | 'kitchen' | 'lightbulbs' | 'other'>; label: string }[] = [
+  { key: 'linens',      label: 'Linens' },
+  { key: 'kitchen',     label: 'Kitchen' },
+  { key: 'lightbulbs',  label: 'Lightbulbs' },
+  { key: 'other',       label: 'Other' },
 ]
 
 function fmt(dateStr: string) {
@@ -19,6 +20,35 @@ function fmt(dateStr: string) {
     month: 'long', day: 'numeric', year: 'numeric',
   })
 }
+
+// ── Collapsible section wrapper ────────────────────────────────────────────────
+
+function CollapsibleSection({
+  label,
+  defaultOpen = false,
+  children,
+}: {
+  label: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-t border-gray-100">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex w-full items-center justify-between bg-gray-50 px-4 py-2.5 text-left hover:bg-gray-100 transition-colors"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+      </button>
+      {open && children}
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function InventoryClient({
   villaId,
@@ -35,22 +65,23 @@ export default function InventoryClient({
   const [selected, setSelected] = useState<InventoryCheck | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Form state — pre-fill from most recent check so edits are quick
   const latest = initialChecks[0] ?? null
   const [checkDate, setCheckDate] = useState(new Date().toISOString().slice(0, 10))
   const [checkedBy, setCheckedBy] = useState(INSPECTORS[0])
   const [checkedByOther, setCheckedByOther] = useState('')
-  const [linens, setLinens] = useState(latest?.linens ?? '')
-  const [kitchen, setKitchen] = useState(latest?.kitchen ?? '')
-  const [other, setOther] = useState(latest?.other ?? '')
+  const [linens, setLinens] = useState('')
+  const [kitchen, setKitchen] = useState('')
+  const [lightbulbs, setLightbulbs] = useState('')
+  const [other, setOther] = useState('')
 
   function handleStartNew() {
-    // Pre-fill from most recent check
     setCheckDate(new Date().toISOString().slice(0, 10))
     setCheckedBy(INSPECTORS[0])
     setCheckedByOther('')
+    // Pre-fill from most recent check
     setLinens(latest?.linens ?? '')
     setKitchen(latest?.kitchen ?? '')
+    setLightbulbs(latest?.lightbulbs ?? '')
     setOther(latest?.other ?? '')
     setSaveError(null)
     setView('form')
@@ -65,6 +96,7 @@ export default function InventoryClient({
         checked_by: name,
         linens,
         kitchen,
+        lightbulbs,
         other,
       })
       if (err) { setSaveError(err); return }
@@ -82,7 +114,7 @@ export default function InventoryClient({
     })
   }
 
-  // ── History view ──────────────────────────────────────────────────────────────
+  // ── History view ────────────────────────────────────────────────────────────
   if (view === 'history') {
     return (
       <div>
@@ -129,8 +161,15 @@ export default function InventoryClient({
     )
   }
 
-  // ── Form view ─────────────────────────────────────────────────────────────────
+  // ── Form view ───────────────────────────────────────────────────────────────
   if (view === 'form') {
+    const formSections = [
+      { label: 'Linens',     value: linens,      set: setLinens },
+      { label: 'Kitchen',    value: kitchen,     set: setKitchen },
+      { label: 'Lightbulbs', value: lightbulbs,  set: setLightbulbs },
+      { label: 'Other',      value: other,       set: setOther },
+    ]
+
     return (
       <div>
         {/* Toolbar */}
@@ -182,20 +221,13 @@ export default function InventoryClient({
           )}
         </div>
 
-        <p className="px-4 pt-3 text-xs text-gray-400">
+        <p className="px-4 pt-3 pb-1 text-xs text-gray-400">
           Pre-filled from previous check — update any quantities or notes that have changed.
         </p>
 
-        {/* Section text areas */}
-        {[
-          { label: 'Linens', value: linens, set: setLinens },
-          { label: 'Kitchen', value: kitchen, set: setKitchen },
-          { label: 'Other', value: other, set: setOther },
-        ].map(({ label, value, set }) => (
-          <div key={label} className="border-t border-gray-100 mt-3">
-            <div className="bg-gray-50 px-4 py-2 border-b border-gray-100">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-            </div>
+        {/* Collapsible section text areas — first open by default */}
+        {formSections.map(({ label, value, set }, i) => (
+          <CollapsibleSection key={label} label={label} defaultOpen={i === 0}>
             <div className="px-4 py-3">
               <textarea
                 value={value}
@@ -205,7 +237,7 @@ export default function InventoryClient({
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772] resize-y font-mono leading-relaxed"
               />
             </div>
-          </div>
+          </CollapsibleSection>
         ))}
 
         {saveError && (
@@ -226,7 +258,7 @@ export default function InventoryClient({
     )
   }
 
-  // ── Detail view ───────────────────────────────────────────────────────────────
+  // ── Detail view ─────────────────────────────────────────────────────────────
   if (view === 'detail' && selected) {
     return (
       <div>
@@ -259,14 +291,11 @@ export default function InventoryClient({
           <span className="font-medium text-gray-800">{selected.checked_by}</span>
         </div>
 
-        {/* Sections */}
-        {SECTIONS.map(({ key, label }) => {
+        {/* Collapsible sections */}
+        {SECTIONS.map(({ key, label }, i) => {
           const content = selected[key]
           return (
-            <div key={key} className="border-b border-gray-100 last:border-b-0">
-              <div className="bg-gray-50 px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-              </div>
+            <CollapsibleSection key={key} label={label} defaultOpen={i === 0}>
               <div className="px-4 py-3">
                 {content ? (
                   <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
@@ -276,7 +305,7 @@ export default function InventoryClient({
                   <p className="text-sm text-gray-400 italic">No {label.toLowerCase()} data recorded.</p>
                 )}
               </div>
-            </div>
+            </CollapsibleSection>
           )
         })}
       </div>
