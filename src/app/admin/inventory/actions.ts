@@ -41,6 +41,31 @@ export async function saveInventoryCheck(
   return null
 }
 
+export async function updateInventoryCheck(
+  checkId: string,
+  data: { check_date: string; checked_by: string; entries: SaveEntry[] }
+): Promise<string | null> {
+  const supabase = getServiceSupabase()
+
+  const { error: headerErr } = await supabase
+    .from('inventory_checks')
+    .update({ check_date: data.check_date, checked_by: data.checked_by })
+    .eq('id', checkId)
+  if (headerErr) return headerErr.message
+
+  // Replace all entries
+  await supabase.from('inventory_check_entries').delete().eq('check_id', checkId)
+  if (data.entries.length > 0) {
+    const { error: entryErr } = await supabase
+      .from('inventory_check_entries')
+      .insert(data.entries.map(e => ({ check_id: checkId, item_id: e.item_id, quantity: e.quantity })))
+    if (entryErr) return entryErr.message
+  }
+
+  revalidatePath('/admin/inventory')
+  return null
+}
+
 export async function deleteInventoryCheck(id: string): Promise<string | null> {
   const supabase = getServiceSupabase()
   const { error } = await supabase.from('inventory_checks').delete().eq('id', id)

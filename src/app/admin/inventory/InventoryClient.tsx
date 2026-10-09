@@ -4,10 +4,10 @@ import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   PlusCircle, ChevronLeft, Trash2, ChevronDown, ChevronUp,
-  ArrowUp, ArrowDown, TrendingUp, TrendingDown,
+  ArrowUp, ArrowDown, TrendingUp, TrendingDown, Pencil,
 } from 'lucide-react'
 import {
-  saveInventoryCheck, deleteInventoryCheck,
+  saveInventoryCheck, updateInventoryCheck, deleteInventoryCheck,
   saveInventoryItem, deleteInventoryItem, moveInventoryItem,
 } from './actions'
 import type { InventoryItem, CheckEntry, InventoryCheck } from './page'
@@ -133,10 +133,16 @@ export default function InventoryClient({
   const [tab, setTab] = useState<'history' | 'manage'>('history')
   const [view, setView] = useState<'list' | 'form' | 'detail'>('list')
   const [selected, setSelected] = useState<InventoryCheck | null>(null)
+  const [editTarget, setEditTarget] = useState<InventoryCheck | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // New check form state
-  const latest = initialChecks[0] ?? null
+  // Sort newest first
+  const checks = useMemo(
+    () => [...initialChecks].sort((a, b) => b.check_date.localeCompare(a.check_date)),
+    [initialChecks]
+  )
+
+  const latest = checks[0] ?? null
   const [checkDate, setCheckDate] = useState(new Date().toISOString().slice(0, 10))
   const [checkedBy, setCheckedBy] = useState(INSPECTORS[0])
   const [checkedByOther, setCheckedByOther] = useState('')
@@ -156,6 +162,7 @@ export default function InventoryClient({
   }
 
   function handleStartNew() {
+    setEditTarget(null)
     setCheckDate(new Date().toISOString().slice(0, 10))
     setCheckedBy(INSPECTORS[0])
     setCheckedByOther('')
@@ -169,6 +176,22 @@ export default function InventoryClient({
     setView('form')
   }
 
+  function handleStartEdit(check: InventoryCheck) {
+    setEditTarget(check)
+    setCheckDate(check.check_date)
+    const inspector = INSPECTORS.includes(check.checked_by) ? check.checked_by : 'Other'
+    setCheckedBy(inspector)
+    setCheckedByOther(inspector === 'Other' ? check.checked_by : '')
+    setSaveError(null)
+    const entryMap = buildEntryMap(check.entries)
+    const initQty: Record<string, number> = {}
+    for (const item of items) {
+      initQty[item.id] = entryMap.get(item.id)?.quantity ?? 0
+    }
+    setQuantities(initQty)
+    setView('form')
+  }
+
   function setQty(itemId: string, val: number) {
     setQuantities(q => ({ ...q, [itemId]: Math.max(0, val) }))
   }
@@ -176,12 +199,11 @@ export default function InventoryClient({
   function handleSave() {
     const name = checkedBy === 'Other' ? checkedByOther.trim() || 'Other' : checkedBy
     setSaveError(null)
+    const entries = items.map(item => ({ item_id: item.id, quantity: quantities[item.id] ?? 0 }))
     startTransition(async () => {
-      const err = await saveInventoryCheck(villaId, {
-        check_date: checkDate,
-        checked_by: name,
-        entries: items.map(item => ({ item_id: item.id, quantity: quantities[item.id] ?? 0 })),
-      })
+      const err = editTarget
+        ? await updateInventoryCheck(editTarget.id, { check_date: checkDate, checked_by: name, entries })
+        : await saveInventoryCheck(villaId, { check_date: checkDate, checked_by: name, entries })
       if (err) { setSaveError(err); return }
       setView('list')
       router.refresh()
@@ -242,13 +264,13 @@ export default function InventoryClient({
           </button>
         </div>
 
-        {initialChecks.length === 0 ? (
+        {checks.length === 0 ? (
           <p className="px-4 py-8 text-sm text-gray-400 italic text-center">
             No inventory checks recorded yet.
           </p>
         ) : (
           <ul className="divide-y divide-gray-50">
-            {initialChecks.map(check => (
+            {checks.map(check => (
               <li key={check.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
                 <button
                   className="flex-1 text-left min-w-0"
@@ -276,8 +298,8 @@ export default function InventoryClient({
 
   // ── History: detail ─────────────────────────────────────────────────────────
   if (tab === 'history' && view === 'detail' && selected) {
-    const idx = initialChecks.findIndex(c => c.id === selected.id)
-    const previous = idx >= 0 && idx + 1 < initialChecks.length ? initialChecks[idx + 1] : null
+    const idx = checks.findIndex(c => c.id === selected.id)
+    const previous = idx >= 0 && idx + 1 < checks.length ? checks[idx + 1] : null
     const deltas = previous ? computeDeltas(selected.entries, previous.entries) : new Map<string, number>()
     const entryMap = buildEntryMap(selected.entries)
     const changedCount = Array.from(deltas.values()).filter(d => d !== 0).length
@@ -298,13 +320,23 @@ export default function InventoryClient({
               {fmt(selected.check_date)}
             </span>
           </div>
-          <button
-            onClick={() => handleDeleteCheck(selected.id)}
-            disabled={isPending}
-            className="text-gray-300 hover:text-red-500 transition-colors"
-          >
-            <Trash2 size={13} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleStartEdit(selected)}
+              disabled={isPending}
+              className="flex items-center gap-1 text-xs text-[#1f5772] hover:underline"
+            >
+              <Pencil size={12} />
+              Edit
+            </button>
+            <button
+              onClick={() => handleDeleteCheck(selected.id)}
+              disabled={isPending}
+              className="text-gray-300 hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -387,7 +419,7 @@ export default function InventoryClient({
             Back
           </button>
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            New Inventory Check — {villaName}
+            {editTarget ? `Edit Check — ${fmt(editTarget.check_date)}` : `New Inventory Check — ${villaName}`}
           </span>
         </div>
 
@@ -425,7 +457,7 @@ export default function InventoryClient({
           )}
         </div>
 
-        {latest && (
+        {!editTarget && latest && (
           <p className="px-4 pt-3 pb-1 text-xs text-gray-400">
             Pre-filled from {fmt(latest.check_date)} — update quantities as needed.
           </p>
@@ -484,7 +516,7 @@ export default function InventoryClient({
             disabled={isPending || !checkDate || items.length === 0}
             className="rounded bg-[#1f5772] px-5 py-2 text-sm font-medium text-white hover:bg-[#174560] disabled:opacity-50 transition-colors"
           >
-            {isPending ? 'Saving…' : 'Save Inventory Check'}
+            {isPending ? 'Saving…' : editTarget ? 'Save Changes' : 'Save Inventory Check'}
           </button>
         </div>
       </div>
