@@ -36,7 +36,7 @@ export default async function InventoryPage({
   const supabase = getServiceSupabase()
 
   const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 84)
+  cutoff.setDate(cutoff.getDate() - 365)
 
   const [{ data: villas }, { data: items }, { data: checks }] = await Promise.all([
     supabase.from('villas').select('id, name').eq('active', true).order('name'),

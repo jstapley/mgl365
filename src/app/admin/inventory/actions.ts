@@ -27,7 +27,7 @@ export async function saveInventoryCheck(
 
   // Prune checks older than 84 days
   const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 84)
+  cutoff.setDate(cutoff.getDate() - 365)
   const { data: old } = await supabase
     .from('inventory_checks')
     .select('id')

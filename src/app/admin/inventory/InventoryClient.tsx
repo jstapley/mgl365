@@ -286,7 +286,7 @@ export default function InventoryClient({
       <div>
         <SubTabs tab={tab} onChange={handleTabChange} />
         <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5 border-b border-gray-100">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Last 12 Weeks</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Last 12 Months</p>
           <button
             onClick={handleStartNew}
             className="flex items-center gap-1 text-xs text-[#1f5772] hover:underline"
