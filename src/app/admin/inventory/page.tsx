@@ -3,16 +3,28 @@ import InventoryClient from './InventoryClient'
 
 const VILLA_ORDER = ['Cool House', 'Water Edge', 'Starfish Lower', 'Starfish Upper']
 
+export interface InventoryItem {
+  id: string
+  villa_id: string
+  category: string
+  name: string
+  sort_order: number
+  active: boolean
+}
+
+export interface CheckEntry {
+  item_id: string
+  quantity: number
+  notes: string | null
+}
+
 export interface InventoryCheck {
   id: string
   villa_id: string
   check_date: string
   checked_by: string
-  linens: string | null
-  kitchen: string | null
-  lightbulbs: string | null
-  other: string | null
   created_at: string
+  entries: CheckEntry[]
 }
 
 export default async function InventoryPage({
@@ -23,15 +35,19 @@ export default async function InventoryPage({
   const { villa: activeVillaId } = await searchParams
   const supabase = getServiceSupabase()
 
-  // Fetch villas and last 12 weeks of checks
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - 84)
 
-  const [{ data: villas }, { data: checks }] = await Promise.all([
+  const [{ data: villas }, { data: items }, { data: checks }] = await Promise.all([
     supabase.from('villas').select('id, name').eq('active', true).order('name'),
     supabase
-      .from('inventory_checks')
+      .from('inventory_items')
       .select('*')
+      .eq('active', true)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('inventory_checks')
+      .select('*, entries:inventory_check_entries(item_id, quantity, notes)')
       .gte('check_date', cutoff.toISOString().slice(0, 10))
       .order('check_date', { ascending: false }),
   ])
@@ -51,9 +67,8 @@ export default async function InventoryPage({
       : villaList[0]?.id
 
   const currentVilla = villaList.find(v => v.id === currentVillaId) ?? null
-  const currentChecks = ((checks ?? []) as InventoryCheck[]).filter(
-    c => c.villa_id === currentVillaId
-  )
+  const currentItems = ((items ?? []) as InventoryItem[]).filter(i => i.villa_id === currentVillaId)
+  const currentChecks = ((checks ?? []) as InventoryCheck[]).filter(c => c.villa_id === currentVillaId)
 
   return (
     <div>
@@ -61,7 +76,6 @@ export default async function InventoryPage({
         <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">Inventory</h1>
       </div>
 
-      {/* Villa tabs */}
       {villaList.length > 0 && (
         <div className="flex gap-0 overflow-x-auto border-b border-gray-200">
           {villaList.map(v => (
@@ -86,6 +100,7 @@ export default async function InventoryPage({
             villaId={currentVilla.id}
             villaName={currentVilla.name}
             initialChecks={currentChecks}
+            items={currentItems}
           />
         </div>
       ) : (
