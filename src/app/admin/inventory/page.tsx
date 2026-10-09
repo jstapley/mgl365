@@ -49,7 +49,8 @@ export default async function InventoryPage({
       .from('inventory_checks')
       .select('*, entries:inventory_check_entries(item_id, quantity, notes)')
       .gte('check_date', cutoff.toISOString().slice(0, 10))
-      .order('check_date', { ascending: false }),
+      .order('check_date', { ascending: false })
+      .order('created_at', { ascending: false }),
   ])
 
   const villaList = (villas ?? []).sort((a, b) => {

@@ -20,6 +20,22 @@ function fmt(dateStr: string) {
   })
 }
 
+function fmtShort(dateStr: string) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  })
+}
+
+function fmtTime(isoStr: string) {
+  return new Date(isoStr).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  })
+}
+
+function totalQty(entries: CheckEntry[]) {
+  return entries.reduce((sum, e) => sum + e.quantity, 0)
+}
+
 function groupByCategory(items: InventoryItem[]): [string, InventoryItem[]][] {
   const map = new Map<string, InventoryItem[]>()
   for (const item of items) {
@@ -136,10 +152,26 @@ export default function InventoryClient({
   const [editTarget, setEditTarget] = useState<InventoryCheck | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Sort newest first
+  // Sort newest first — secondary sort by created_at when dates are the same
   const checks = useMemo(
-    () => [...initialChecks].sort((a, b) => b.check_date.localeCompare(a.check_date)),
+    () => [...initialChecks].sort((a, b) => {
+      const dateCmp = b.check_date.localeCompare(a.check_date)
+      if (dateCmp !== 0) return dateCmp
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }),
     [initialChecks]
+  )
+
+  // Precompute totals + delta vs previous check for the list view
+  const checkRows = useMemo(() =>
+    checks.map((check, idx) => {
+      const previous = idx + 1 < checks.length ? checks[idx + 1] : null
+      const current = totalQty(check.entries)
+      const prev = previous ? totalQty(previous.entries) : null
+      const delta = prev !== null ? current - prev : null
+      return { check, current, prev, delta }
+    }),
+    [checks]
   )
 
   const latest = checks[0] ?? null
@@ -264,33 +296,87 @@ export default function InventoryClient({
           </button>
         </div>
 
-        {checks.length === 0 ? (
+        {checkRows.length === 0 ? (
           <p className="px-4 py-8 text-sm text-gray-400 italic text-center">
             No inventory checks recorded yet.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-50">
-            {checks.map(check => (
-              <li key={check.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                <button
-                  className="flex-1 text-left min-w-0"
-                  onClick={() => { setSelected(check); setView('detail') }}
-                >
-                  <p className="text-sm font-medium text-gray-800">{fmt(check.check_date)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Checked by {check.checked_by} · {check.entries.length} items
-                  </p>
-                </button>
-                <button
-                  onClick={() => handleDeleteCheck(check.id)}
-                  disabled={isPending}
-                  className="shrink-0 text-gray-300 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* Column headers */}
+            <div className="hidden md:grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <span>Date &amp; Inspector</span>
+              <span className="text-right">Previous</span>
+              <span className="text-right">Current</span>
+              <span className="text-right w-16">Delta</span>
+              <span />
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {checkRows.map(({ check, current, prev, delta }) => {
+                const hasDelta = delta !== null && delta !== 0
+                const rowBg = hasDelta
+                  ? delta < 0 ? 'bg-red-50/60' : 'bg-green-50/60'
+                  : ''
+                return (
+                  <li key={check.id} className={`${rowBg} hover:brightness-95 transition-all`}>
+                    <div className="flex items-center gap-3 px-4 py-2.5">
+                      {/* Clickable main area */}
+                      <button
+                        className="flex-1 min-w-0 text-left"
+                        onClick={() => { setSelected(check); setView('detail') }}
+                      >
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-800">
+                            {fmtShort(check.check_date)}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {fmtTime(check.created_at)}
+                          </span>
+                          <span className="text-xs text-gray-400">· {check.checked_by}</span>
+                        </div>
+
+                        {/* Mobile: counts on second line */}
+                        <div className="flex items-center gap-3 mt-0.5 md:hidden">
+                          {prev !== null ? (
+                            <span className="text-xs text-gray-500">
+                              <span className="text-gray-400">{prev}</span>
+                              <span className="mx-1 text-gray-300">→</span>
+                              <span className="font-semibold text-gray-700">{current}</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">{current} items</span>
+                          )}
+                          {hasDelta && (
+                            <DeltaBadge delta={delta!} />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Desktop: count columns */}
+                      <div className="hidden md:flex items-center gap-4 shrink-0">
+                        <span className="text-sm text-gray-400 w-16 text-right font-mono">
+                          {prev !== null ? prev : '—'}
+                        </span>
+                        <span className="text-sm font-semibold text-gray-800 w-16 text-right font-mono">
+                          {current}
+                        </span>
+                        <span className="w-16 text-right">
+                          {hasDelta ? <DeltaBadge delta={delta!} /> : <span className="text-xs text-gray-300">—</span>}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteCheck(check.id)}
+                        disabled={isPending}
+                        className="shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
         )}
       </div>
     )
