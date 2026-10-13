@@ -24,7 +24,7 @@ export default async function TrackingPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Link Tracker</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Track clicks from Instagram, Facebook, and WhatsApp.
+          Track clicks from Instagram, TikTok, Facebook, WhatsApp, and more.
         </p>
       </div>
       <TrackingClient

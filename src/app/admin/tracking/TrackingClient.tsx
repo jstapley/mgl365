@@ -33,11 +33,12 @@ interface Villa {
 }
 
 const CHANNELS: Record<string, { label: string; medium: string; color: string }> = {
-  instagram: { label: 'Instagram', medium: 'social',   color: 'bg-pink-100 text-pink-700'   },
-  facebook:  { label: 'Facebook',  medium: 'social',   color: 'bg-blue-100 text-blue-700'   },
-  whatsapp:  { label: 'WhatsApp',  medium: 'social',   color: 'bg-green-100 text-green-700' },
-  email:     { label: 'Email',     medium: 'email',    color: 'bg-purple-100 text-purple-700'},
-  other:     { label: 'Other',     medium: 'referral', color: 'bg-gray-100 text-gray-600'   },
+  instagram: { label: 'Instagram', medium: 'social',   color: 'bg-pink-100 text-pink-700'    },
+  tiktok:    { label: 'TikTok',    medium: 'social',   color: 'bg-slate-100 text-slate-700'  },
+  facebook:  { label: 'Facebook',  medium: 'social',   color: 'bg-blue-100 text-blue-700'    },
+  whatsapp:  { label: 'WhatsApp',  medium: 'social',   color: 'bg-green-100 text-green-700'  },
+  email:     { label: 'Email',     medium: 'email',    color: 'bg-purple-100 text-purple-700' },
+  other:     { label: 'Other',     medium: 'referral', color: 'bg-gray-100 text-gray-600'    },
 }
 
 const VILLA_UTM: Record<string, string> = {
