@@ -58,14 +58,22 @@ function EntryForm({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [isAdhoc, setIsAdhoc] = useState(false)
   const [serviceBooked, setServiceBooked] = useState(
     entry?.service_booked ?? providers.find(p => p.id === defaultProviderId)?.primary_service ?? ''
   )
   const today = new Date().toISOString().slice(0, 10)
 
   function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const p = providers.find(p => p.id === e.target.value)
-    setServiceBooked(p?.primary_service ?? '')
+    const val = e.target.value
+    if (val === '__adhoc__') {
+      setIsAdhoc(true)
+      setServiceBooked('')
+    } else {
+      setIsAdhoc(false)
+      const p = providers.find(p => p.id === val)
+      setServiceBooked(p?.primary_service ?? '')
+    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -102,8 +110,16 @@ function EntryForm({
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772] bg-white">
             <option value="">— Select —</option>
             {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <option value="__adhoc__">＋ New provider…</option>
           </select>
         </div>
+        {isAdhoc && (
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Provider name *</label>
+            <input name="provider_name" type="text" required placeholder="Company or person name"
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-[#1f5772]" />
+          </div>
+        )}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Villa</label>
           <select name="villa_id" defaultValue={entry?.villa_id ?? ''}

@@ -3,10 +3,27 @@
 import { revalidatePath } from 'next/cache'
 import { getServiceSupabase } from '@/lib/supabase'
 
+async function resolveProviderId(formData: FormData): Promise<{ id: string; error?: string }> {
+  const supabase = getServiceSupabase()
+  const providerId = formData.get('provider_id') as string
+  if (providerId !== '__adhoc__') return { id: providerId }
+  const name = (formData.get('provider_name') as string)?.trim()
+  if (!name) return { id: '', error: 'Please enter a provider name.' }
+  const { data, error } = await supabase
+    .from('commission_providers')
+    .insert({ name, primary_service: name, sort_order: 999, active: true })
+    .select('id')
+    .single()
+  if (error) return { id: '', error: error.message }
+  return { id: data.id }
+}
+
 export async function createEntry(formData: FormData): Promise<string | null> {
   const supabase = getServiceSupabase()
+  const { id: providerId, error: provErr } = await resolveProviderId(formData)
+  if (provErr) return provErr
   const { error } = await supabase.from('commission_entries').insert({
-    provider_id:    formData.get('provider_id') as string,
+    provider_id:    providerId,
     villa_id:       (formData.get('villa_id') as string) || null,
     entry_date:     formData.get('entry_date') as string,
     guest_name:     (formData.get('guest_name') as string)?.trim() || null,
@@ -30,8 +47,10 @@ export async function updatePaymentStatus(id: string, status: string): Promise<v
 
 export async function updateEntry(id: string, formData: FormData): Promise<string | null> {
   const supabase = getServiceSupabase()
+  const { id: providerId, error: provErr } = await resolveProviderId(formData)
+  if (provErr) return provErr
   const { error } = await supabase.from('commission_entries').update({
-    provider_id:    formData.get('provider_id') as string,
+    provider_id:    providerId,
     villa_id:       (formData.get('villa_id') as string) || null,
     entry_date:     formData.get('entry_date') as string,
     guest_name:     (formData.get('guest_name') as string)?.trim() || null,
