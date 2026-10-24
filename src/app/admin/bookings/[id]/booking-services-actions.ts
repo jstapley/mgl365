@@ -77,6 +77,14 @@ export async function deleteBookingService(id: string, bookingId: string): Promi
   revalidatePath(`/admin/bookings/${bookingId}`)
 }
 
+export async function bulkDeleteBookingServices(ids: string[], bookingId: string): Promise<string | null> {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('booking_services').delete().in('id', ids)
+  if (error) return error.message
+  revalidatePath(`/admin/bookings/${bookingId}`)
+  return null
+}
+
 export async function importFromSubmission(bookingId: string): Promise<{ imported: number; skipped: number; error?: string }> {
   const supabase = getServiceSupabase()
 

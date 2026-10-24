@@ -7,6 +7,7 @@ import {
   createBookingService,
   updateBookingService,
   deleteBookingService,
+  bulkDeleteBookingServices,
   pushToCommissions,
   importFromSubmission,
 } from './booking-services-actions'
@@ -250,11 +251,38 @@ export default function BookingServicesPanel({
 }) {
   const router = useRouter()
   const [isPendingImport, startImport] = useTransition()
+  const [isPendingBulk, startBulk] = useTransition()
   const [showForm, setShowForm] = useState(false)
   const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const totalUsd = initialServices.reduce((s, sv) => s + (sv.cost_usd ?? 0), 0)
   const totalXcd = initialServices.reduce((s, sv) => s + (sv.cost_xcd ?? 0), 0)
+
+  const allSelected = initialServices.length > 0 && selected.size === initialServices.length
+  const someSelected = selected.size > 0
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(initialServices.map(s => s.id)))
+  }
+
+  function toggleOne(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function handleBulkDelete() {
+    if (!confirm(`Delete ${selected.size} selected service${selected.size !== 1 ? 's' : ''}?`)) return
+    const ids = Array.from(selected)
+    startBulk(async () => {
+      await bulkDeleteBookingServices(ids, bookingId)
+      setSelected(new Set())
+      router.refresh()
+    })
+  }
 
   function handleImport() {
     setImportMsg(null)
@@ -328,17 +356,53 @@ export default function BookingServicesPanel({
           No confirmed services yet. Add services after finalising with the guest.
         </p>
       ) : (
-        <div className="space-y-2">
-          {initialServices.map(svc => (
-            <ServiceRow
-              key={svc.id}
-              service={svc}
-              bookingId={bookingId}
-              villaId={villaId}
-              checkIn={checkIn}
-            />
-          ))}
-        </div>
+        <>
+          {/* Select-all / bulk delete bar — only when list has items */}
+          {initialServices.length > 0 && (
+            <div className="mb-2 flex items-center gap-3">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="rounded border-gray-300 accent-[#1f5772]"
+                />
+                <span className="text-xs text-gray-500">Select all</span>
+              </label>
+              {someSelected && (
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isPendingBulk}
+                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+                >
+                  <Trash2 size={12} />
+                  Delete {selected.size} selected
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {initialServices.map(svc => (
+              <div key={svc.id} className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={selected.has(svc.id)}
+                  onChange={() => toggleOne(svc.id)}
+                  className="mt-3.5 rounded border-gray-300 accent-[#1f5772] shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <ServiceRow
+                    service={svc}
+                    bookingId={bookingId}
+                    villaId={villaId}
+                    checkIn={checkIn}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
