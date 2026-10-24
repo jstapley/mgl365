@@ -183,16 +183,17 @@ export async function pushToCommissions(
   const guestName = (bookingRow?.client as any)?.name ?? null
 
   const { error: entryErr } = await supabase.from('commission_entries').insert({
-    provider_id:    providerId,
-    villa_id:       villaId,
-    entry_date:     svc.service_date ?? entryDate,
-    guest_name:     guestName,
-    service_booked: svc.service_name,
-    collected_by:   'Jamie',
-    commission_usd: svc.cost_usd,
-    commission_xcd: svc.cost_xcd,
-    payment_status: 'unpaid',
-    notes:          null,
+    provider_id:        providerId,
+    villa_id:           villaId,
+    entry_date:         svc.service_date ?? entryDate,
+    guest_name:         guestName,
+    service_booked:     svc.service_name,
+    collected_by:       'Jamie',
+    commission_usd:     svc.cost_usd,
+    commission_xcd:     svc.cost_xcd,
+    payment_status:     'unpaid',
+    notes:              null,
+    booking_service_id: serviceId,
   })
   if (entryErr) return entryErr.message
 

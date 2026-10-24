@@ -51,9 +51,13 @@ function ServiceForm({
   // Service name — controlled so provider selection can auto-fill it
   const [serviceName, setServiceName] = useState(service?.service_name ?? '')
 
-  // Provider dropdown — detect if existing value matches a known provider
+  // Provider dropdown — match by stored provider name, or auto-match by primary_service
   const existingProvider = service?.provider ?? ''
-  const matchedProvider = providers.find(p => p.name === existingProvider)
+  const matchedByName = providers.find(p => p.name === existingProvider)
+  const matchedByService = !existingProvider && service?.service_name
+    ? providers.find(p => p.primary_service?.toLowerCase() === service.service_name.toLowerCase())
+    : null
+  const matchedProvider = matchedByName ?? matchedByService ?? null
   const [selectedProvider, setSelectedProvider] = useState(
     matchedProvider ? matchedProvider.name : (existingProvider ? '__other__' : '')
   )
