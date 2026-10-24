@@ -7,8 +7,9 @@ ALTER TABLE "mgl-365".bookings
   ADD COLUMN IF NOT EXISTS pre_arrival_sent_at timestamptz;
 
 -- Default email template for the pre-arrival week email
-INSERT INTO "mgl-365".email_templates (trigger, subject, body, active)
+INSERT INTO "mgl-365".email_templates (name, trigger, subject, body, active)
 VALUES (
+  'Pre-Arrival Services Summary',
   'pre_arrival_week',
   'Your stay at {{villa_name}} is one week away!',
   'Hi {{guest_first_name}},
@@ -25,4 +26,4 @@ Warm regards,
 The MGL 365 Team',
   true
 )
-ON CONFLICT (trigger) DO NOTHING;
+-- Note: no unique constraint on trigger column, so omit ON CONFLICT
