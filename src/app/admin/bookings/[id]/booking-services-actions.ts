@@ -144,29 +144,47 @@ export async function pushToCommissions(
     .single()
   if (svcErr || !svc) return 'Service not found.'
 
-  // Find provider by name match, or leave null (user picks in commissions)
+  // Find provider by name match — if not found, create one on the fly
   const { data: providers } = await supabase
     .from('commission_providers')
-    .select('id, name')
+    .select('id, name, sort_order')
     .eq('active', true)
-  const matched = providers?.find(
-    p => p.name.toLowerCase() === (svc.provider ?? '').toLowerCase()
-  )
 
-  // Fetch first active provider as fallback placeholder
-  const fallbackProvider = providers?.[0]
+  let providerId: string | null = null
+
+  if (svc.provider) {
+    const matched = providers?.find(
+      p => p.name.toLowerCase() === svc.provider!.toLowerCase()
+    )
+    if (matched) {
+      providerId = matched.id
+    } else {
+      // Auto-create the provider
+      const maxSort = providers?.reduce((m, p) => Math.max(m, p.sort_order ?? 0), 0) ?? 0
+      const { data: newProvider, error: provErr } = await supabase
+        .from('commission_providers')
+        .insert({ name: svc.provider, primary_service: svc.service_name, sort_order: maxSort + 1, active: true })
+        .select('id')
+        .single()
+      if (provErr) return provErr.message
+      providerId = newProvider.id
+    }
+  } else {
+    // No provider on the service — use first as placeholder, user corrects in tracker
+    providerId = providers?.[0]?.id ?? null
+  }
 
   const { error: entryErr } = await supabase.from('commission_entries').insert({
-    provider_id:    matched?.id ?? fallbackProvider?.id ?? null,
+    provider_id:    providerId,
     villa_id:       villaId,
     entry_date:     entryDate,
     guest_name:     null,
     service_booked: svc.service_name,
-    collected_by:   'Jamie',  // default — user edits in commission tracker
+    collected_by:   'Jamie',
     commission_usd: svc.cost_usd,
     commission_xcd: svc.cost_xcd,
     payment_status: 'unpaid',
-    notes:          svc.provider ? `Provider: ${svc.provider}` : null,
+    notes:          null,
   })
   if (entryErr) return entryErr.message
 
