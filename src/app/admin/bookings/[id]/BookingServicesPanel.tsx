@@ -37,11 +37,13 @@ function ServiceForm({
   bookingId,
   service,
   providers,
+  serviceProviderMap,
   onDone,
 }: {
   bookingId: string
   service?: BookingService
   providers: Provider[]
+  serviceProviderMap: Record<string, string>
   onDone: () => void
 }) {
   const router = useRouter()
@@ -51,13 +53,16 @@ function ServiceForm({
   // Service name — controlled so provider selection can auto-fill it
   const [serviceName, setServiceName] = useState(service?.service_name ?? '')
 
-  // Provider dropdown — match by stored provider name, or auto-match by primary_service
+  // Provider dropdown — match by stored name → primary_service → commission history
   const existingProvider = service?.provider ?? ''
   const matchedByName = providers.find(p => p.name === existingProvider)
   const matchedByService = !existingProvider && service?.service_name
     ? providers.find(p => p.primary_service?.toLowerCase() === service.service_name.toLowerCase())
     : null
-  const matchedProvider = matchedByName ?? matchedByService ?? null
+  const matchedByHistory = !existingProvider && service?.service_name
+    ? providers.find(p => p.name === serviceProviderMap[service.service_name.toLowerCase()])
+    : null
+  const matchedProvider = matchedByName ?? matchedByService ?? matchedByHistory ?? null
   const [selectedProvider, setSelectedProvider] = useState(
     matchedProvider ? matchedProvider.name : (existingProvider ? '__other__' : '')
   )
@@ -184,12 +189,14 @@ function ServiceRow({
   villaId,
   checkIn,
   providers,
+  serviceProviderMap,
 }: {
   service: BookingService
   bookingId: string
   villaId: string | null
   checkIn: string
   providers: Provider[]
+  serviceProviderMap: Record<string, string>
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -220,6 +227,7 @@ function ServiceRow({
         bookingId={bookingId}
         service={service}
         providers={providers}
+        serviceProviderMap={serviceProviderMap}
         onDone={() => setEditing(false)}
       />
     )
@@ -294,6 +302,7 @@ export default function BookingServicesPanel({
   initialServices,
   submissionActivityCount,
   providers,
+  serviceProviderMap,
 }: {
   bookingId: string
   villaId: string | null
@@ -301,6 +310,7 @@ export default function BookingServicesPanel({
   initialServices: BookingService[]
   submissionActivityCount: number
   providers: Provider[]
+  serviceProviderMap: Record<string, string>
 }) {
   const router = useRouter()
   const [isPendingImport, startImport] = useTransition()
@@ -400,6 +410,7 @@ export default function BookingServicesPanel({
           <ServiceForm
             bookingId={bookingId}
             providers={providers}
+            serviceProviderMap={serviceProviderMap}
             onDone={() => setShowForm(false)}
           />
         </div>
@@ -451,6 +462,7 @@ export default function BookingServicesPanel({
                     bookingId={bookingId}
                     villaId={villaId}
                     providers={providers}
+                    serviceProviderMap={serviceProviderMap}
                     checkIn={checkIn}
                   />
                 </div>

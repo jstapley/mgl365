@@ -65,13 +65,30 @@ const INTEREST_LABELS: { key: string; label: string }[] = [
   { key: 'interest_provisioning', label: 'Provisioning' },
 ]
 
+async function getServiceProviderMap(): Promise<Record<string, string>> {
+  const supabase = getServiceSupabase()
+  const { data } = await supabase
+    .from('commission_entries')
+    .select('service_booked, provider:commission_providers(name)')
+    .not('service_booked', 'is', null)
+    .order('entry_date', { ascending: false })
+  const map: Record<string, string> = {}
+  for (const row of data ?? []) {
+    const key = (row.service_booked as string)?.toLowerCase()
+    const providerName = (row.provider as any)?.name
+    if (key && providerName && !map[key]) map[key] = providerName
+  }
+  return map
+}
+
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [booking, { villas, clients, providers }, submission, services] = await Promise.all([
+  const [booking, { villas, clients, providers }, submission, services, serviceProviderMap] = await Promise.all([
     getBooking(id),
     getOptions(),
     getSubmission(id),
     getBookingServices(id),
+    getServiceProviderMap(),
   ])
 
   const selectedActivities: { id: string; name: string; price?: number; duration?: string; notes?: string }[] =
@@ -290,6 +307,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           initialServices={services}
           submissionActivityCount={selectedActivities.length}
           providers={providers}
+          serviceProviderMap={serviceProviderMap}
         />
       </div>
 
