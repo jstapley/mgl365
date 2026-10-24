@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import { PlusCircle, Trash2, ChevronLeft, Pencil } from 'lucide-react'
-import { createEntry, updateEntry, updatePaymentStatus, deleteEntry } from './actions'
+import { createEntry, updateEntry, updatePaymentStatus, deleteEntry, updateProviderService } from './actions'
 import { useRouter } from 'next/navigation'
 import type { Provider, Villa, Entry, Client } from './page'
 
@@ -211,6 +211,16 @@ function ProviderDetail({
   const [isPending, startTransition] = useTransition()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null)
+  const [editingService, setEditingService] = useState(false)
+  const [serviceValue, setServiceValue] = useState(provider.primary_service ?? '')
+
+  function handleSaveService() {
+    startTransition(async () => {
+      await updateProviderService(provider.id, serviceValue)
+      setEditingService(false)
+      router.refresh()
+    })
+  }
 
   const villaById = Object.fromEntries(villas.map(v => [v.id, v]))
 
@@ -247,7 +257,30 @@ function ProviderDetail({
         </button>
         <div>
           <h2 className="text-lg font-semibold text-gray-900">{provider.name}</h2>
-          <p className="text-xs text-gray-400">{provider.primary_service}</p>
+          {editingService ? (
+            <div className="flex items-center gap-1 mt-0.5">
+              <input
+                value={serviceValue}
+                onChange={e => setServiceValue(e.target.value)}
+                placeholder="Primary service (e.g. Turtle Adventure)"
+                className="rounded border border-gray-300 px-2 py-0.5 text-xs outline-none focus:border-[#1f5772] w-52"
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveService(); if (e.key === 'Escape') setEditingService(false) }}
+              />
+              <button onClick={handleSaveService} disabled={isPending}
+                className="text-xs text-[#1f5772] hover:underline disabled:opacity-50">Save</button>
+              <button onClick={() => setEditingService(false)}
+                className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setEditingService(true)}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 group mt-0.5"
+            >
+              <span>{serviceValue || 'Set primary service…'}</span>
+              <Pencil size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
         </div>
         {unpaidCount > 0 && (
           <span className="ml-2 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">

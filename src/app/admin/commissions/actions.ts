@@ -66,6 +66,17 @@ export async function updateEntry(id: string, formData: FormData): Promise<strin
   return null
 }
 
+export async function updateProviderService(providerId: string, primaryService: string): Promise<string | null> {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase
+    .from('commission_providers')
+    .update({ primary_service: primaryService.trim() || null })
+    .eq('id', providerId)
+  if (error) return error.message
+  revalidatePath('/admin/commissions')
+  return null
+}
+
 export async function deleteEntry(id: string): Promise<void> {
   const supabase = getServiceSupabase()
   await supabase.from('commission_entries').delete().eq('id', id)
