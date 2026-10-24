@@ -108,20 +108,20 @@ export async function importFromSubmission(bookingId: string): Promise<{ importe
   if (!submission) return { imported: 0, skipped: 0, error: 'No onboarding submission found for this booking.' }
 
   // Build candidate list: selected activities first, then checked interests
-  type Candidate = { name: string; cost_usd: number | null; notes: string | null }
+  type Candidate = { service_name: string; cost_usd: number | null; notes: string | null }
 
   const activities: { id?: string; name: string; price?: number; duration?: string; notes?: string }[] =
     (submission as any).selected_activities ?? []
 
   const candidates: Candidate[] = [
     ...activities.map(a => ({
-      name:     a.name,
-      cost_usd: a.price ?? null,
-      notes:    a.duration ? `Duration: ${a.duration}${a.notes ? ` · ${a.notes}` : ''}` : (a.notes ?? null),
+      service_name: a.name,
+      cost_usd:     a.price ?? null,
+      notes:        a.duration ? `Duration: ${a.duration}${a.notes ? ` · ${a.notes}` : ''}` : (a.notes ?? null),
     })),
     ...INTEREST_LABELS
       .filter(({ key }) => (submission as any)[key])
-      .map(({ label }) => ({ name: label, cost_usd: null, notes: null })),
+      .map(({ label }) => ({ service_name: label, cost_usd: null, notes: null })),
   ]
 
   if (candidates.length === 0) return { imported: 0, skipped: 0, error: 'No activities or service interests found in the submission.' }
@@ -133,7 +133,7 @@ export async function importFromSubmission(bookingId: string): Promise<{ importe
     .eq('booking_id', bookingId)
   const existingNames = new Set((existing ?? []).map(s => s.service_name.toLowerCase()))
 
-  const toInsert = candidates.filter(c => !existingNames.has(c.name.toLowerCase()))
+  const toInsert = candidates.filter(c => !existingNames.has(c.service_name.toLowerCase()))
   const skipped = candidates.length - toInsert.length
 
   if (toInsert.length === 0) return { imported: 0, skipped }
