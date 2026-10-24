@@ -3,10 +3,12 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Villa, Booking } from '@/types'
+import type { MaintenanceEvent } from '@/app/admin/calendar/page'
 
 interface Props {
   villas: Villa[]
   bookings: Booking[]
+  maintenanceEvents: MaintenanceEvent[]
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -25,7 +27,14 @@ function getColor(villaName: string, idx: number) {
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 
-export default function CalendarViewMulti({ villas, bookings }: Props) {
+// Maintenance event dot colours
+const MAINT_COLORS: Record<MaintenanceEvent['type'], string> = {
+  schedule_due: 'bg-amber-400',
+  schedule_log: 'bg-gray-300',
+  issue:        'bg-orange-500',
+}
+
+export default function CalendarViewMulti({ villas, bookings, maintenanceEvents }: Props) {
   const [currentDate, setCurrentDate] = useState(() => {
     const d = new Date()
     return new Date(d.getFullYear(), d.getMonth(), 1)
@@ -58,7 +67,27 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
     })
   }, [villas, bookings])
 
-  // Build flat list of cells (nulls for padding, then actual days)
+  // Map villa_id → dateStr → MaintenanceEvent[]
+  const maintMap = useMemo(() => {
+    const map = new Map<string, Map<string, MaintenanceEvent[]>>()
+    for (const evt of maintenanceEvents) {
+      const vKey = evt.villa_id ?? '__global__'
+      if (!map.has(vKey)) map.set(vKey, new Map())
+      const dMap = map.get(vKey)!
+      if (!dMap.has(evt.date)) dMap.set(evt.date, [])
+      dMap.get(evt.date)!.push(evt)
+    }
+    return map
+  }, [maintenanceEvents])
+
+  function getMaintEvents(villaId: string, dateStr: string): MaintenanceEvent[] {
+    return [
+      ...(maintMap.get(villaId)?.get(dateStr) ?? []),
+      ...(maintMap.get('__global__')?.get(dateStr) ?? []),
+    ]
+  }
+
+  // Build flat list of cells
   const cells = useMemo(() => {
     const all: { day: number | null; dateStr: string | null }[] = []
     for (let i = 0; i < startOffset; i++) all.push({ day: null, dateStr: null })
@@ -76,7 +105,7 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
     return ws
   }, [cells])
 
-  // For a given villa + week, compute bar segments (grouped spans)
+  // For a given villa + week, compute bar segments
   function getWeekSegments(villaIdx: number, week: typeof weeks[0]) {
     const map = villaBookingMaps[villaIdx]
     const segments: {
@@ -85,7 +114,7 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
       isStart: boolean
       isEnd: boolean
       showLabel: boolean
-      colStart: number // 1-based column in the 7-col grid
+      colStart: number
     }[] = []
 
     let i = 0
@@ -94,7 +123,6 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
       const booking = cell.dateStr ? (map.get(cell.dateStr) ?? null) : null
 
       if (!booking) {
-        // merge consecutive empty cells
         let span = 1
         while (i + span < 7) {
           const next = week[i + span]
@@ -107,7 +135,6 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
         continue
       }
 
-      // Count how far this booking spans in this week
       let span = 1
       while (i + span < 7) {
         const next = week[i + span]
@@ -116,12 +143,11 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
         span++
       }
 
-      const isStart   = booking.check_in === cell.dateStr
-      const lastDate  = week[i + span - 1].dateStr
+      const isStart  = booking.check_in === cell.dateStr
+      const lastDate = week[i + span - 1].dateStr
       const [ey, em, ed] = booking.check_out.split('-').map(Number)
       const dayBeforeCheckout = new Date(ey, em - 1, ed - 1).toISOString().slice(0, 10)
-      const isEnd     = lastDate === dayBeforeCheckout
-      // Show label on booking start OR first day in this week row
+      const isEnd    = lastDate === dayBeforeCheckout
       const showLabel = isStart || i === 0
 
       segments.push({ booking, span, isStart, isEnd, showLabel, colStart: i + 1 })
@@ -170,38 +196,64 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
               ))}
             </div>
 
-            {/* One bar row per villa */}
+            {/* One row per villa: booking bar + maintenance dots */}
             {villas.map((villa, vidx) => {
               const segments = getWeekSegments(vidx, week)
               const color = getColor(villa.name, vidx)
+
               return (
-                <div key={villa.id} className="grid grid-cols-7 h-7 px-0.5 mb-0.5">
-                  {segments.map((seg, si) => {
-                    const colSpanStyle = { gridColumn: `span ${seg.span}` }
-                    if (!seg.booking) {
-                      return <div key={si} style={colSpanStyle} />
-                    }
-                    return (
-                      <Link
-                        key={si}
-                        href={`/admin/bookings/${seg.booking.id}`}
-                        title={`${villa.name} — ${seg.booking.client?.name ?? 'Guest'} (${seg.booking.status})`}
-                        style={colSpanStyle}
-                        className={`flex h-6 items-center overflow-hidden px-2 text-white transition-opacity hover:opacity-80
-                          ${color}
-                          ${seg.isStart ? 'rounded-l-full ml-0.5' : ''}
-                          ${seg.isEnd   ? 'rounded-r-full mr-0.5' : ''}
-                        `}
-                      >
-                        {seg.showLabel && (
-                          <span className="truncate whitespace-nowrap text-[10px] font-semibold">
-                            {seg.booking.client?.name ?? 'Guest'}
-                            <span className="ml-1 font-normal opacity-80 capitalize">· {seg.booking.status}</span>
-                          </span>
-                        )}
-                      </Link>
-                    )
-                  })}
+                <div key={villa.id}>
+                  {/* Booking bar */}
+                  <div className="grid grid-cols-7 h-7 px-0.5 mb-0.5">
+                    {segments.map((seg, si) => {
+                      const colSpanStyle = { gridColumn: `span ${seg.span}` }
+                      if (!seg.booking) return <div key={si} style={colSpanStyle} />
+                      return (
+                        <Link
+                          key={si}
+                          href={`/admin/bookings/${seg.booking.id}`}
+                          title={`${villa.name} — ${seg.booking.client?.name ?? 'Guest'} (${seg.booking.status})`}
+                          style={colSpanStyle}
+                          className={`flex h-6 items-center overflow-hidden px-2 text-white transition-opacity hover:opacity-80
+                            ${color}
+                            ${seg.isStart ? 'rounded-l-full ml-0.5' : ''}
+                            ${seg.isEnd   ? 'rounded-r-full mr-0.5' : ''}
+                          `}
+                        >
+                          {seg.showLabel && (
+                            <span className="truncate whitespace-nowrap text-[10px] font-semibold">
+                              {seg.booking.client?.name ?? 'Guest'}
+                              <span className="ml-1 font-normal opacity-80 capitalize">· {seg.booking.status}</span>
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
+
+                  {/* Maintenance dots row */}
+                  <div className="grid grid-cols-7 h-4 px-0.5 mb-1">
+                    {week.map((cell, ci) => {
+                      if (!cell.dateStr) return <div key={ci} />
+                      const evts = getMaintEvents(villa.id, cell.dateStr)
+                      if (evts.length === 0) return <div key={ci} />
+                      return (
+                        <div key={ci} className="flex items-center justify-center gap-0.5 overflow-hidden">
+                          {evts.slice(0, 3).map(evt => (
+                            <Link
+                              key={evt.id}
+                              href="/admin/maintenance"
+                              title={`${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
+                              className={`h-2 w-2 shrink-0 rounded-full ${MAINT_COLORS[evt.type]} hover:opacity-70 transition-opacity`}
+                            />
+                          ))}
+                          {evts.length > 3 && (
+                            <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })}
@@ -217,6 +269,20 @@ export default function CalendarViewMulti({ villas, bookings }: Props) {
             <span>{villa.name}</span>
           </div>
         ))}
+        <div className="ml-2 flex items-center gap-3 border-l border-gray-200 pl-3">
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-amber-400" />
+            <span>Maintenance due</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-orange-500" />
+            <span>Scheduled issue</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-gray-300" />
+            <span>Completed</span>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -102,13 +102,29 @@ export async function createIssue(villaId: string, formData: FormData) {
   const description = (formData.get('description') as string)?.trim()
   if (!description) return
   const { error } = await supabase.from('maintenance_issues').insert({
-    villa_id: villaId,
+    villa_id:       villaId,
     description,
-    notes: (formData.get('notes') as string)?.trim() || null,
-    image_url: (formData.get('image_url') as string)?.trim() || null,
+    notes:          (formData.get('notes') as string)?.trim() || null,
+    image_url:      (formData.get('image_url') as string)?.trim() || null,
+    scheduled_date: (formData.get('scheduled_date') as string) || null,
+    assigned_to:    (formData.get('assigned_to') as string)?.trim() || null,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/admin/maintenance')
+  revalidatePath('/admin/calendar')
+}
+
+export async function updateIssue(id: string, formData: FormData) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('maintenance_issues').update({
+    description:    (formData.get('description') as string)?.trim(),
+    notes:          (formData.get('notes') as string)?.trim() || null,
+    scheduled_date: (formData.get('scheduled_date') as string) || null,
+    assigned_to:    (formData.get('assigned_to') as string)?.trim() || null,
+  }).eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+  revalidatePath('/admin/calendar')
 }
 
 export async function resolveIssue(id: string) {
