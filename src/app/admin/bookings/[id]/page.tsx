@@ -8,6 +8,8 @@ import Link from 'next/link'
 import { ClipboardList } from 'lucide-react'
 import DeleteBookingButton from './DeleteBookingButton'
 import StatusButtons from './StatusButtons'
+import BookingServicesPanel from './BookingServicesPanel'
+import { getBookingServices } from './booking-services-actions'
 
 async function getBooking(id: string): Promise<Booking> {
   const supabase = getServiceSupabase()
@@ -63,10 +65,11 @@ const INTEREST_LABELS: { key: string; label: string }[] = [
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [booking, { villas, clients }, submission] = await Promise.all([
+  const [booking, { villas, clients }, submission, services] = await Promise.all([
     getBooking(id),
     getOptions(),
     getSubmission(id),
+    getBookingServices(id),
   ])
 
   const selectedActivities: { id: string; name: string; price?: number; duration?: string; notes?: string }[] =
@@ -275,6 +278,17 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </div>
 
       </div>
+
+      {/* Confirmed services — full width below */}
+      <div className="mt-6">
+        <BookingServicesPanel
+          bookingId={id}
+          villaId={booking.villa_id}
+          checkIn={booking.check_in}
+          initialServices={services}
+        />
+      </div>
+
     </div>
   )
 }
