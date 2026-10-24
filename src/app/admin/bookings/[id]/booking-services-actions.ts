@@ -85,22 +85,46 @@ export async function bulkDeleteBookingServices(ids: string[], bookingId: string
   return null
 }
 
+const INTEREST_LABELS: { key: string; label: string }[] = [
+  { key: 'interest_spa',          label: 'Spa Services' },
+  { key: 'interest_tours',        label: 'Barefoot Tours' },
+  { key: 'interest_excursions',   label: 'Excursions' },
+  { key: 'interest_wine',         label: 'Wine List' },
+  { key: 'interest_transport',    label: 'Transport' },
+  { key: 'interest_chef',         label: 'Private Chef' },
+  { key: 'interest_provisioning', label: 'Provisioning' },
+]
+
 export async function importFromSubmission(bookingId: string): Promise<{ imported: number; skipped: number; error?: string }> {
   const supabase = getServiceSupabase()
 
-  // Fetch the onboarding submission for this booking
+  // Fetch activities + all interest flags
   const { data: submission } = await supabase
     .from('onboarding_submissions')
-    .select('selected_activities')
+    .select('selected_activities, interest_spa, interest_tours, interest_excursions, interest_wine, interest_transport, interest_chef, interest_provisioning')
     .eq('booking_id', bookingId)
     .single()
 
   if (!submission) return { imported: 0, skipped: 0, error: 'No onboarding submission found for this booking.' }
 
-  const activities: { id?: string; name: string; price?: number; duration?: string; notes?: string }[] =
-    submission.selected_activities ?? []
+  // Build candidate list: selected activities first, then checked interests
+  type Candidate = { name: string; cost_usd: number | null; notes: string | null }
 
-  if (activities.length === 0) return { imported: 0, skipped: 0, error: 'No selected activities found in the submission.' }
+  const activities: { id?: string; name: string; price?: number; duration?: string; notes?: string }[] =
+    (submission as any).selected_activities ?? []
+
+  const candidates: Candidate[] = [
+    ...activities.map(a => ({
+      name:     a.name,
+      cost_usd: a.price ?? null,
+      notes:    a.duration ? `Duration: ${a.duration}${a.notes ? ` · ${a.notes}` : ''}` : (a.notes ?? null),
+    })),
+    ...INTEREST_LABELS
+      .filter(({ key }) => (submission as any)[key])
+      .map(({ label }) => ({ name: label, cost_usd: null, notes: null })),
+  ]
+
+  if (candidates.length === 0) return { imported: 0, skipped: 0, error: 'No activities or service interests found in the submission.' }
 
   // Fetch existing service names to avoid duplicates
   const { data: existing } = await supabase
@@ -109,18 +133,13 @@ export async function importFromSubmission(bookingId: string): Promise<{ importe
     .eq('booking_id', bookingId)
   const existingNames = new Set((existing ?? []).map(s => s.service_name.toLowerCase()))
 
-  const toInsert = activities.filter(a => !existingNames.has(a.name.toLowerCase()))
-  const skipped = activities.length - toInsert.length
+  const toInsert = candidates.filter(c => !existingNames.has(c.name.toLowerCase()))
+  const skipped = candidates.length - toInsert.length
 
   if (toInsert.length === 0) return { imported: 0, skipped }
 
   const { error } = await supabase.from('booking_services').insert(
-    toInsert.map(a => ({
-      booking_id:   bookingId,
-      service_name: a.name,
-      cost_usd:     a.price ?? null,
-      notes:        a.duration ? `Duration: ${a.duration}${a.notes ? ` · ${a.notes}` : ''}` : (a.notes ?? null),
-    }))
+    toInsert.map(c => ({ booking_id: bookingId, ...c }))
   )
   if (error) return { imported: 0, skipped, error: error.message }
 

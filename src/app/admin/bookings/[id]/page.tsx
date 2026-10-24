@@ -94,6 +94,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const selectedActivities: { id: string; name: string; price?: number; duration?: string; notes?: string }[] =
     (submission as any)?.selected_activities ?? []
 
+  const interestCount = submission
+    ? INTEREST_LABELS.filter(({ key }) => (submission as any)[key]).length
+    : 0
+  const importableCount = selectedActivities.length + interestCount
+
   return (
     <div className="max-w-6xl">
       <div className="mb-6 flex items-center gap-3">
@@ -305,7 +310,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           villaId={booking.villa_id}
           checkIn={booking.check_in}
           initialServices={services}
-          submissionActivityCount={selectedActivities.length}
+          submissionActivityCount={importableCount}
           providers={providers}
           serviceProviderMap={serviceProviderMap}
         />
