@@ -98,10 +98,10 @@ const INTEREST_LABELS: { key: string; label: string }[] = [
 export async function importFromSubmission(bookingId: string): Promise<{ imported: number; skipped: number; error?: string }> {
   const supabase = getServiceSupabase()
 
-  // Fetch activities + all interest flags
+  // Fetch activities, interest flags, and provisioning grocery data
   const { data: submission } = await supabase
     .from('onboarding_submissions')
-    .select('selected_activities, interest_spa, interest_tours, interest_excursions, interest_wine, interest_transport, interest_chef, interest_provisioning')
+    .select('selected_activities, interest_spa, interest_tours, interest_excursions, interest_wine, interest_transport, interest_chef, interest_provisioning, grocery_items, grocery_notes')
     .eq('booking_id', bookingId)
     .single()
 
@@ -121,7 +121,16 @@ export async function importFromSubmission(bookingId: string): Promise<{ importe
     })),
     ...INTEREST_LABELS
       .filter(({ key }) => (submission as any)[key])
-      .map(({ label }) => ({ service_name: label, cost_usd: null, notes: null })),
+      .map(({ key, label }) => {
+        let notes: string | null = null
+        if (key === 'interest_provisioning') {
+          const items = ((submission as any).grocery_items as string | null)?.trim() || ''
+          const extraNotes = ((submission as any).grocery_notes as string | null)?.trim() || ''
+          const parts = [items, extraNotes].filter(Boolean)
+          notes = parts.length ? parts.join('\n') : null
+        }
+        return { service_name: label, cost_usd: null, notes }
+      }),
   ]
 
   if (candidates.length === 0) return { imported: 0, skipped: 0, error: 'No activities or service interests found in the submission.' }
