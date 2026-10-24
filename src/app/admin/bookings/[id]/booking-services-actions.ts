@@ -77,6 +77,49 @@ export async function deleteBookingService(id: string, bookingId: string): Promi
   revalidatePath(`/admin/bookings/${bookingId}`)
 }
 
+export async function importFromSubmission(bookingId: string): Promise<{ imported: number; skipped: number; error?: string }> {
+  const supabase = getServiceSupabase()
+
+  // Fetch the onboarding submission for this booking
+  const { data: submission } = await supabase
+    .from('onboarding_submissions')
+    .select('selected_activities')
+    .eq('booking_id', bookingId)
+    .single()
+
+  if (!submission) return { imported: 0, skipped: 0, error: 'No onboarding submission found for this booking.' }
+
+  const activities: { id?: string; name: string; price?: number; duration?: string; notes?: string }[] =
+    submission.selected_activities ?? []
+
+  if (activities.length === 0) return { imported: 0, skipped: 0, error: 'No selected activities found in the submission.' }
+
+  // Fetch existing service names to avoid duplicates
+  const { data: existing } = await supabase
+    .from('booking_services')
+    .select('service_name')
+    .eq('booking_id', bookingId)
+  const existingNames = new Set((existing ?? []).map(s => s.service_name.toLowerCase()))
+
+  const toInsert = activities.filter(a => !existingNames.has(a.name.toLowerCase()))
+  const skipped = activities.length - toInsert.length
+
+  if (toInsert.length === 0) return { imported: 0, skipped }
+
+  const { error } = await supabase.from('booking_services').insert(
+    toInsert.map(a => ({
+      booking_id:   bookingId,
+      service_name: a.name,
+      cost_usd:     a.price ?? null,
+      notes:        a.duration ? `Duration: ${a.duration}${a.notes ? ` · ${a.notes}` : ''}` : (a.notes ?? null),
+    }))
+  )
+  if (error) return { imported: 0, skipped, error: error.message }
+
+  revalidatePath(`/admin/bookings/${bookingId}`)
+  return { imported: toInsert.length, skipped }
+}
+
 export async function pushToCommissions(
   serviceId: string,
   bookingId: string,

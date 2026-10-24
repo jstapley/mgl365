@@ -286,6 +286,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           villaId={booking.villa_id}
           checkIn={booking.check_in}
           initialServices={services}
+          submissionActivityCount={selectedActivities.length}
         />
       </div>
 

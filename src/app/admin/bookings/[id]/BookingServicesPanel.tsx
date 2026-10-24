@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { PlusCircle, Pencil, Trash2, ArrowRightCircle, CheckCircle2 } from 'lucide-react'
+import { PlusCircle, Pencil, Trash2, ArrowRightCircle, CheckCircle2, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   createBookingService,
   updateBookingService,
   deleteBookingService,
   pushToCommissions,
+  importFromSubmission,
 } from './booking-services-actions'
 import type { BookingService } from './booking-services-actions'
 
@@ -239,20 +240,41 @@ export default function BookingServicesPanel({
   villaId,
   checkIn,
   initialServices,
+  submissionActivityCount,
 }: {
   bookingId: string
   villaId: string | null
   checkIn: string
   initialServices: BookingService[]
+  submissionActivityCount: number
 }) {
+  const router = useRouter()
+  const [isPendingImport, startImport] = useTransition()
   const [showForm, setShowForm] = useState(false)
+  const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
   const totalUsd = initialServices.reduce((s, sv) => s + (sv.cost_usd ?? 0), 0)
   const totalXcd = initialServices.reduce((s, sv) => s + (sv.cost_xcd ?? 0), 0)
 
+  function handleImport() {
+    setImportMsg(null)
+    startImport(async () => {
+      const result = await importFromSubmission(bookingId)
+      if (result.error) {
+        setImportMsg({ text: result.error, ok: false })
+      } else {
+        const parts = []
+        if (result.imported > 0) parts.push(`${result.imported} imported`)
+        if (result.skipped > 0) parts.push(`${result.skipped} already exist, skipped`)
+        setImportMsg({ text: parts.join(' · '), ok: true })
+        router.refresh()
+      }
+    })
+  }
+
   return (
     <div className="rounded border border-gray-200 bg-white p-5">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
             Confirmed Services
@@ -265,14 +287,32 @@ export default function BookingServicesPanel({
             </p>
           )}
         </div>
-        <button
-          onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-1 text-xs text-[#1f5772] hover:underline"
-        >
-          <PlusCircle size={13} />
-          Add Service
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {submissionActivityCount > 0 && (
+            <button
+              onClick={handleImport}
+              disabled={isPendingImport}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#1f5772] border border-gray-300 rounded px-2 py-1 hover:border-[#1f5772] transition-colors disabled:opacity-50"
+            >
+              <Download size={12} />
+              {isPendingImport ? 'Importing…' : `Import from submission (${submissionActivityCount})`}
+            </button>
+          )}
+          <button
+            onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-1 text-xs text-[#1f5772] hover:underline"
+          >
+            <PlusCircle size={13} />
+            Add Service
+          </button>
+        </div>
       </div>
+
+      {importMsg && (
+        <p className={`mb-2 text-xs ${importMsg.ok ? 'text-green-600' : 'text-red-600'}`}>
+          {importMsg.text}
+        </p>
+      )}
 
       {showForm && (
         <div className="mb-3">
