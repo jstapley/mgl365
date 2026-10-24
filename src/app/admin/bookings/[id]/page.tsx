@@ -27,12 +27,12 @@ async function getOptions() {
   const [{ data: villas }, { data: clients }, { data: providers }] = await Promise.all([
     supabase.from('villas').select('id, name').order('name'),
     supabase.from('clients').select('id, name').order('name'),
-    supabase.from('commission_providers').select('id, name').eq('active', true).order('sort_order'),
+    supabase.from('commission_providers').select('id, name, primary_service').eq('active', true).order('sort_order'),
   ])
   return {
     villas: (villas ?? []) as Pick<Villa, 'id' | 'name'>[],
     clients: (clients ?? []) as Pick<Client, 'id' | 'name'>[],
-    providers: (providers ?? []) as { id: string; name: string }[],
+    providers: (providers ?? []) as { id: string; name: string; primary_service: string | null }[],
   }
 }
 

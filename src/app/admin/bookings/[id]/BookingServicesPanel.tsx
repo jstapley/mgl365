@@ -31,7 +31,7 @@ function fmtMoney(usd: number | null, xcd: number | null) {
 
 // ── Service Form ───────────────────────────────────────────────────────────────
 
-interface Provider { id: string; name: string }
+interface Provider { id: string; name: string; primary_service: string | null }
 
 function ServiceForm({
   bookingId,
@@ -48,6 +48,9 @@ function ServiceForm({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  // Service name — controlled so provider selection can auto-fill it
+  const [serviceName, setServiceName] = useState(service?.service_name ?? '')
+
   // Provider dropdown — detect if existing value matches a known provider
   const existingProvider = service?.provider ?? ''
   const matchedProvider = providers.find(p => p.name === existingProvider)
@@ -59,10 +62,20 @@ function ServiceForm({
   )
   const resolvedProvider = selectedProvider === '__other__' ? otherProvider : selectedProvider
 
+  function handleProviderChange(val: string) {
+    setSelectedProvider(val)
+    // Auto-fill service name from primary_service only when field is empty
+    if (!serviceName) {
+      const p = providers.find(pr => pr.name === val)
+      if (p?.primary_service) setServiceName(p.primary_service)
+    }
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     fd.set('provider', resolvedProvider)
+    fd.set('service_name', serviceName)
     setError(null)
     startTransition(async () => {
       const err = service
@@ -83,14 +96,15 @@ function ServiceForm({
         <div className="col-span-2 sm:col-span-1">
           <label className="block text-xs font-medium text-gray-600 mb-1">Service *</label>
           <input name="service_name" required placeholder="e.g. Turtle Tour"
-            defaultValue={service?.service_name ?? ''}
+            value={serviceName}
+            onChange={e => setServiceName(e.target.value)}
             className={inputCls} />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
           <select
             value={selectedProvider}
-            onChange={e => setSelectedProvider(e.target.value)}
+            onChange={e => handleProviderChange(e.target.value)}
             className={`${inputCls} bg-white`}
           >
             <option value="">— None —</option>

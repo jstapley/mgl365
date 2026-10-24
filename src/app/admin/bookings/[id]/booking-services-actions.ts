@@ -174,11 +174,19 @@ export async function pushToCommissions(
     providerId = providers?.[0]?.id ?? null
   }
 
+  // Fetch client name for the booking
+  const { data: bookingRow } = await supabase
+    .from('bookings')
+    .select('client:clients(name)')
+    .eq('id', bookingId)
+    .single()
+  const guestName = (bookingRow?.client as any)?.name ?? null
+
   const { error: entryErr } = await supabase.from('commission_entries').insert({
     provider_id:    providerId,
     villa_id:       villaId,
-    entry_date:     entryDate,
-    guest_name:     null,
+    entry_date:     svc.service_date ?? entryDate,
+    guest_name:     guestName,
     service_booked: svc.service_name,
     collected_by:   'Jamie',
     commission_usd: svc.cost_usd,
