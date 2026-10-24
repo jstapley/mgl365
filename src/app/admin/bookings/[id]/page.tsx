@@ -24,13 +24,15 @@ async function getBooking(id: string): Promise<Booking> {
 
 async function getOptions() {
   const supabase = getServiceSupabase()
-  const [{ data: villas }, { data: clients }] = await Promise.all([
+  const [{ data: villas }, { data: clients }, { data: providers }] = await Promise.all([
     supabase.from('villas').select('id, name').order('name'),
     supabase.from('clients').select('id, name').order('name'),
+    supabase.from('commission_providers').select('id, name').eq('active', true).order('sort_order'),
   ])
   return {
     villas: (villas ?? []) as Pick<Villa, 'id' | 'name'>[],
     clients: (clients ?? []) as Pick<Client, 'id' | 'name'>[],
+    providers: (providers ?? []) as { id: string; name: string }[],
   }
 }
 
@@ -65,7 +67,7 @@ const INTEREST_LABELS: { key: string; label: string }[] = [
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [booking, { villas, clients }, submission, services] = await Promise.all([
+  const [booking, { villas, clients, providers }, submission, services] = await Promise.all([
     getBooking(id),
     getOptions(),
     getSubmission(id),
@@ -287,6 +289,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           checkIn={booking.check_in}
           initialServices={services}
           submissionActivityCount={selectedActivities.length}
+          providers={providers}
         />
       </div>
 

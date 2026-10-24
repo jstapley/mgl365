@@ -31,22 +31,38 @@ function fmtMoney(usd: number | null, xcd: number | null) {
 
 // ── Service Form ───────────────────────────────────────────────────────────────
 
+interface Provider { id: string; name: string }
+
 function ServiceForm({
   bookingId,
   service,
+  providers,
   onDone,
 }: {
   bookingId: string
   service?: BookingService
+  providers: Provider[]
   onDone: () => void
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  // Provider dropdown — detect if existing value matches a known provider
+  const existingProvider = service?.provider ?? ''
+  const matchedProvider = providers.find(p => p.name === existingProvider)
+  const [selectedProvider, setSelectedProvider] = useState(
+    matchedProvider ? matchedProvider.name : (existingProvider ? '__other__' : '')
+  )
+  const [otherProvider, setOtherProvider] = useState(
+    matchedProvider || !existingProvider ? '' : existingProvider
+  )
+  const resolvedProvider = selectedProvider === '__other__' ? otherProvider : selectedProvider
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    fd.set('provider', resolvedProvider)
     setError(null)
     startTransition(async () => {
       const err = service
@@ -72,9 +88,23 @@ function ServiceForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
-          <input name="provider" placeholder="e.g. Favour Media"
-            defaultValue={service?.provider ?? ''}
-            className={inputCls} />
+          <select
+            value={selectedProvider}
+            onChange={e => setSelectedProvider(e.target.value)}
+            className={`${inputCls} bg-white`}
+          >
+            <option value="">— None —</option>
+            {providers.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+            <option value="__other__">Other…</option>
+          </select>
+          {selectedProvider === '__other__' && (
+            <input
+              value={otherProvider}
+              onChange={e => setOtherProvider(e.target.value)}
+              placeholder="Enter provider name"
+              className={`${inputCls} mt-1`}
+            />
+          )}
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
@@ -135,11 +165,13 @@ function ServiceRow({
   bookingId,
   villaId,
   checkIn,
+  providers,
 }: {
   service: BookingService
   bookingId: string
   villaId: string | null
   checkIn: string
+  providers: Provider[]
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -169,6 +201,7 @@ function ServiceRow({
       <ServiceForm
         bookingId={bookingId}
         service={service}
+        providers={providers}
         onDone={() => setEditing(false)}
       />
     )
@@ -242,12 +275,14 @@ export default function BookingServicesPanel({
   checkIn,
   initialServices,
   submissionActivityCount,
+  providers,
 }: {
   bookingId: string
   villaId: string | null
   checkIn: string
   initialServices: BookingService[]
   submissionActivityCount: number
+  providers: Provider[]
 }) {
   const router = useRouter()
   const [isPendingImport, startImport] = useTransition()
@@ -346,6 +381,7 @@ export default function BookingServicesPanel({
         <div className="mb-3">
           <ServiceForm
             bookingId={bookingId}
+            providers={providers}
             onDone={() => setShowForm(false)}
           />
         </div>
@@ -396,6 +432,7 @@ export default function BookingServicesPanel({
                     service={svc}
                     bookingId={bookingId}
                     villaId={villaId}
+                    providers={providers}
                     checkIn={checkIn}
                   />
                 </div>
