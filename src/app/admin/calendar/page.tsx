@@ -10,6 +10,7 @@ export interface MaintenanceEvent {
   date: string          // YYYY-MM-DD
   assigned_to: string | null
   type: 'schedule_due' | 'schedule_log' | 'issue'
+  href: string
 }
 
 async function getData() {
@@ -40,6 +41,7 @@ async function getData() {
       date:        s.next_due,
       assigned_to: null,
       type:        'schedule_due',
+      href:        `/admin/maintenance/${s.id}`,
     })
   }
 
@@ -53,10 +55,11 @@ async function getData() {
       date:        l.completed_date,
       assigned_to: null,
       type:        'schedule_log',
+      href:        `/admin/maintenance/${l.schedule_id}`,
     })
   }
 
-  // Ad-hoc issues with a scheduled date
+  // Ad-hoc issues with a scheduled date — link to villa tab (no issue detail page)
   for (const i of issues ?? []) {
     events.push({
       id:          `issue-${i.id}`,
@@ -65,6 +68,7 @@ async function getData() {
       date:        i.scheduled_date!,
       assigned_to: i.assigned_to,
       type:        'issue',
+      href:        `/admin/maintenance?villa=${i.villa_id}`,
     })
   }
 

@@ -262,7 +262,7 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                                 {evts.slice(0, 3).map(evt => (
                                   <Link
                                     key={evt.id}
-                                    href={`/admin/maintenance?villa=${villa.id}`}
+                                    href={evt.href}
                                     title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
                                     className={`h-2 w-2 shrink-0 rounded-full ${MAINT_COLORS[evt.type]} hover:opacity-70 transition-opacity`}
                                   />
