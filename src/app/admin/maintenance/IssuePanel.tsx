@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
-import { PlusCircle, Trash2, ImageIcon, Upload, ExternalLink, Pencil } from 'lucide-react'
-import { createIssue, updateIssue, resolveIssue, deleteIssue, updateIssueImage } from './actions'
+import { useState, useTransition, useRef } from 'react'
+import { PlusCircle, Trash2, Upload } from 'lucide-react'
+import Link from 'next/link'
+import { createIssue, resolveIssue, deleteIssue } from './actions'
 
 interface Issue {
   id: string
@@ -17,115 +18,9 @@ interface Issue {
 
 const inputCls = 'w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]'
 
-function UploadCell({ issueId, existingUrl, disabled }: { issueId: string; existingUrl: string | null; disabled: boolean }) {
-  const [uploading, setUploading] = useState(false)
-  const [url, setUrl] = useState(existingUrl)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      const renamed = new File([file], `maintenance/${Date.now()}-${file.name}`, { type: file.type })
-      fd.append('file', renamed)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-      const json = await res.json()
-      if (json.url) {
-        setUrl(json.url)
-        await updateIssueImage(issueId, json.url)
-      }
-    } finally {
-      setUploading(false)
-      if (inputRef.current) inputRef.current.value = ''
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-[#1f5772] hover:underline">
-          <ImageIcon size={13} />
-          <span className="hidden sm:inline">View</span>
-          <ExternalLink size={10} />
-        </a>
-      ) : (
-        <span className="text-xs text-gray-300">—</span>
-      )}
-      <input ref={inputRef} type="file" accept="image/*" capture="environment"
-        className="hidden" onChange={handleFile} disabled={disabled || uploading} />
-      <button type="button" onClick={() => inputRef.current?.click()}
-        disabled={disabled || uploading} title="Upload photo"
-        className="flex items-center gap-1 rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-[#1f5772] hover:text-[#1f5772] disabled:opacity-40 transition-colors">
-        <Upload size={11} />
-        <span className="hidden sm:inline">{uploading ? 'Uploading…' : url ? 'Replace' : 'Upload'}</span>
-      </button>
-    </div>
-  )
-}
-
-function IssueEditForm({ issue, onDone }: { issue: Issue; onDone: () => void }) {
-  const [isPending, startTransition] = useTransition()
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    startTransition(async () => {
-      await updateIssue(issue.id, fd)
-      onDone()
-    })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded border border-gray-200 bg-blue-50 p-3">
-      <input name="description" required defaultValue={issue.description}
-        placeholder="Issue description…" className={inputCls} />
-      <input name="notes" defaultValue={issue.notes ?? ''}
-        placeholder="Notes (optional)" className={inputCls} />
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Scheduled date</label>
-          <input name="scheduled_date" type="date" defaultValue={issue.scheduled_date ?? ''} className={inputCls} />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Assigned to</label>
-          <input name="assigned_to" defaultValue={issue.assigned_to ?? ''}
-            placeholder="e.g. Michel, Contractor" className={inputCls} />
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={isPending}
-          className="rounded bg-[#1f5772] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#174560] disabled:opacity-50">
-          {isPending ? 'Saving…' : 'Save'}
-        </button>
-        <button type="button" onClick={onDone}
-          className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">
-          Cancel
-        </button>
-      </div>
-    </form>
-  )
-}
-
-export default function IssuePanel({ villaId, initialIssues, highlightIssueId }: { villaId: string; initialIssues: Issue[]; highlightIssueId?: string }) {
+export default function IssuePanel({ villaId, initialIssues }: { villaId: string; initialIssues: Issue[] }) {
   const [showForm, setShowForm] = useState(false)
-  const [showResolved, setShowResolved] = useState(() => {
-    if (!highlightIssueId) return false
-    return initialIssues.some(i => i.id === highlightIssueId && i.resolved_at)
-  })
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const issueRefs = useRef<Record<string, HTMLDivElement | null>>({})
-
-  useEffect(() => {
-    if (!highlightIssueId) return
-    const el = issueRefs.current[highlightIssueId]
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-  }, [highlightIssueId])
-
+  const [showResolved, setShowResolved] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -255,42 +150,32 @@ export default function IssuePanel({ villaId, initialIssues, highlightIssueId }:
       ) : (
         <div className="divide-y divide-gray-50">
           {open.map(issue => (
-            <div key={issue.id} ref={el => { issueRefs.current[issue.id] = el }}>
-              {editingId === issue.id ? (
-                <div className="px-4 py-3">
-                  <IssueEditForm issue={issue} onDone={() => setEditingId(null)} />
+            <div key={issue.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50">
+              <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 accent-[#1f5772] cursor-pointer"
+                onChange={() => handleResolve(issue.id)} disabled={isPending} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">{issue.description}</p>
+                {issue.notes && <p className="text-xs text-gray-500 mt-0.5">{issue.notes}</p>}
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
+                  <span>Logged {fmtDate(issue.created_at)}</span>
+                  {issue.scheduled_date && (
+                    <span className="text-amber-600 font-medium">Scheduled {fmtDate(issue.scheduled_date)}</span>
+                  )}
+                  {issue.assigned_to && (
+                    <span>Assigned: {issue.assigned_to}</span>
+                  )}
                 </div>
-              ) : (
-                <div className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${highlightIssueId === issue.id ? 'ring-2 ring-inset ring-[#1f5772] bg-blue-50' : ''}`}>
-                  <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 accent-[#1f5772] cursor-pointer"
-                    onChange={() => handleResolve(issue.id)} disabled={isPending} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{issue.description}</p>
-                    {issue.notes && <p className="text-xs text-gray-500 mt-0.5">{issue.notes}</p>}
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
-                      <span>Logged {fmtDate(issue.created_at)}</span>
-                      {issue.scheduled_date && (
-                        <span className="text-amber-600 font-medium">Scheduled {fmtDate(issue.scheduled_date)}</span>
-                      )}
-                      {issue.assigned_to && (
-                        <span>Assigned: {issue.assigned_to}</span>
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <UploadCell issueId={issue.id} existingUrl={issue.image_url} disabled={isPending} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => setEditingId(issue.id)} className="text-gray-300 hover:text-gray-600 transition-colors">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(issue.id)} disabled={isPending}
-                      className="text-gray-300 hover:text-red-500 transition-colors">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <Link href={`/admin/maintenance/issues/${issue.id}`}
+                  className="text-xs text-[#1f5772] hover:underline">
+                  View
+                </Link>
+                <button onClick={() => handleDelete(issue.id)} disabled={isPending}
+                  className="text-gray-300 hover:text-red-500 transition-colors">
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -306,33 +191,26 @@ export default function IssuePanel({ villaId, initialIssues, highlightIssueId }:
           {showResolved && (
             <div className="mt-2 divide-y divide-gray-50">
               {resolved.map(issue => (
-                <div key={issue.id} ref={el => { issueRefs.current[issue.id] = el }}>
-                  {editingId === issue.id ? (
-                    <div className="py-2">
-                      <IssueEditForm issue={issue} onDone={() => setEditingId(null)} />
+                <div key={issue.id} className="flex items-start gap-3 py-2">
+                  <input type="checkbox" checked readOnly className="mt-0.5 h-4 w-4 shrink-0 accent-[#1f5772]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-400 line-through">{issue.description}</p>
+                    {issue.notes && <p className="text-xs text-gray-300 mt-0.5">{issue.notes}</p>}
+                    <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-gray-300">
+                      <span>Resolved {fmtDate(issue.resolved_at!)}</span>
+                      {issue.assigned_to && <span>· {issue.assigned_to}</span>}
                     </div>
-                  ) : (
-                    <div className={`flex items-start gap-3 py-2 transition-colors ${highlightIssueId === issue.id ? 'ring-2 ring-inset ring-[#1f5772] rounded bg-blue-50 px-2' : ''}`}>
-                      <input type="checkbox" checked readOnly className="mt-0.5 h-4 w-4 shrink-0 accent-[#1f5772]" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 line-through">{issue.description}</p>
-                        {issue.notes && <p className="text-xs text-gray-300 mt-0.5">{issue.notes}</p>}
-                        <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-gray-300">
-                          <span>Resolved {fmtDate(issue.resolved_at!)}</span>
-                          {issue.assigned_to && <span>· {issue.assigned_to}</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setEditingId(issue.id)} className="text-gray-200 hover:text-gray-500 transition-colors">
-                          <Pencil size={13} />
-                        </button>
-                        <button onClick={() => handleDelete(issue.id)} disabled={isPending}
-                          className="text-gray-200 hover:text-red-400 transition-colors">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Link href={`/admin/maintenance/issues/${issue.id}`}
+                      className="text-xs text-gray-400 hover:text-[#1f5772] hover:underline">
+                      View
+                    </Link>
+                    <button onClick={() => handleDelete(issue.id)} disabled={isPending}
+                      className="text-gray-200 hover:text-red-400 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

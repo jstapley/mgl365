@@ -125,6 +125,26 @@ export async function updateIssue(id: string, formData: FormData) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/maintenance')
   revalidatePath('/admin/calendar')
+  revalidatePath(`/admin/maintenance/issues/${id}`)
+}
+
+export async function unresolveIssue(id: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase
+    .from('maintenance_issues')
+    .update({ resolved_at: null })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+  revalidatePath(`/admin/maintenance/issues/${id}`)
+}
+
+export async function deleteIssueAndRedirect(id: string, villaId: string) {
+  const supabase = getServiceSupabase()
+  const { error } = await supabase.from('maintenance_issues').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/maintenance')
+  redirect(`/admin/maintenance${villaId ? `?villa=${villaId}` : ''}`)
 }
 
 export async function resolveIssue(id: string) {

@@ -60,9 +60,9 @@ async function getData() {
 export default async function MaintenancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ villa?: string; issue?: string }>
+  searchParams: Promise<{ villa?: string }>
 }) {
-  const { villa: activeVillaId, issue: activeIssueId } = await searchParams
+  const { villa: activeVillaId } = await searchParams
   const { schedules, issues, villas } = await getData()
 
   // Build per-villa data
@@ -254,7 +254,7 @@ export default async function MaintenancePage({
           )}
 
           {/* Ad-hoc issues */}
-          <IssuePanel villaId={current.villaId} initialIssues={current.issues} highlightIssueId={activeIssueId} />
+          <IssuePanel villaId={current.villaId} initialIssues={current.issues} />
         </div>
       ) : (
         <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-gray-400">

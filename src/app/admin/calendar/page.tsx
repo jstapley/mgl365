@@ -68,7 +68,7 @@ async function getData() {
       date:        i.scheduled_date!,
       assigned_to: i.assigned_to,
       type:        'issue',
-      href:        `/admin/maintenance?villa=${i.villa_id}&issue=${i.id}`,
+      href:        `/admin/maintenance/issues/${i.id}`,
     })
   }
 
