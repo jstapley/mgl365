@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { PlusCircle, Trash2, ImageIcon, Upload, ExternalLink, Pencil } from 'lucide-react'
 import { createIssue, updateIssue, resolveIssue, deleteIssue, updateIssueImage } from './actions'
 
@@ -109,10 +109,23 @@ function IssueEditForm({ issue, onDone }: { issue: Issue; onDone: () => void }) 
   )
 }
 
-export default function IssuePanel({ villaId, initialIssues }: { villaId: string; initialIssues: Issue[] }) {
+export default function IssuePanel({ villaId, initialIssues, highlightIssueId }: { villaId: string; initialIssues: Issue[]; highlightIssueId?: string }) {
   const [showForm, setShowForm] = useState(false)
-  const [showResolved, setShowResolved] = useState(false)
+  const [showResolved, setShowResolved] = useState(() => {
+    if (!highlightIssueId) return false
+    return initialIssues.some(i => i.id === highlightIssueId && i.resolved_at)
+  })
   const [editingId, setEditingId] = useState<string | null>(null)
+  const issueRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  useEffect(() => {
+    if (!highlightIssueId) return
+    const el = issueRefs.current[highlightIssueId]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [highlightIssueId])
+
   const [isPending, startTransition] = useTransition()
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -242,13 +255,13 @@ export default function IssuePanel({ villaId, initialIssues }: { villaId: string
       ) : (
         <div className="divide-y divide-gray-50">
           {open.map(issue => (
-            <div key={issue.id}>
+            <div key={issue.id} ref={el => { issueRefs.current[issue.id] = el }}>
               {editingId === issue.id ? (
                 <div className="px-4 py-3">
                   <IssueEditForm issue={issue} onDone={() => setEditingId(null)} />
                 </div>
               ) : (
-                <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50">
+                <div className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${highlightIssueId === issue.id ? 'ring-2 ring-inset ring-[#1f5772] bg-blue-50' : ''}`}>
                   <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 accent-[#1f5772] cursor-pointer"
                     onChange={() => handleResolve(issue.id)} disabled={isPending} />
                   <div className="flex-1 min-w-0">
@@ -293,13 +306,13 @@ export default function IssuePanel({ villaId, initialIssues }: { villaId: string
           {showResolved && (
             <div className="mt-2 divide-y divide-gray-50">
               {resolved.map(issue => (
-                <div key={issue.id}>
+                <div key={issue.id} ref={el => { issueRefs.current[issue.id] = el }}>
                   {editingId === issue.id ? (
                     <div className="py-2">
                       <IssueEditForm issue={issue} onDone={() => setEditingId(null)} />
                     </div>
                   ) : (
-                    <div className="flex items-start gap-3 py-2">
+                    <div className={`flex items-start gap-3 py-2 transition-colors ${highlightIssueId === issue.id ? 'ring-2 ring-inset ring-[#1f5772] rounded bg-blue-50 px-2' : ''}`}>
                       <input type="checkbox" checked readOnly className="mt-0.5 h-4 w-4 shrink-0 accent-[#1f5772]" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-400 line-through">{issue.description}</p>
