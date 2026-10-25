@@ -134,24 +134,35 @@ export default async function AdminDashboard() {
                 (Date.now() - new Date(issue.created_at).getTime()) / 86400000
               )
               return (
-                <Link
-                  key={issue.id}
-                  href={`/admin/maintenance${issue.villa ? `?villa=${issue.villa.id}` : ''}`}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                >
+                <div key={issue.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <CircleAlert size={15} className="shrink-0 text-red-400" strokeWidth={1.8} />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{issue.description}</p>
-                      {issue.villa && (
-                        <p className="text-xs text-gray-500">{issue.villa.name}</p>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {issue.villa && (
+                          <span className="text-xs text-gray-500">{issue.villa.name}</span>
+                        )}
+                        <span className="text-xs text-gray-300">·</span>
+                        <span className="text-xs text-gray-400">
+                          {daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <span className="ml-3 shrink-0 text-xs text-gray-400">
-                    {daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}
-                  </span>
-                </Link>
+                  <div className="ml-3 flex shrink-0 items-center gap-3">
+                    <Link href={`/admin/maintenance/issues/${issue.id}`}
+                      className="text-xs font-medium text-[#1f5772] hover:underline">
+                      View Issue
+                    </Link>
+                    {issue.villa && (
+                      <Link href={`/admin/maintenance?villa=${issue.villa.id}`}
+                        className="text-xs text-gray-400 hover:text-gray-600 hover:underline">
+                        View All
+                      </Link>
+                    )}
+                  </div>
+                </div>
               )
             })}
           </div>
