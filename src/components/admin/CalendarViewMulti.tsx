@@ -231,29 +231,52 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                     })}
                   </div>
 
-                  {/* Maintenance dots row */}
-                  <div className="grid grid-cols-7 h-4 px-0.5 mb-1">
-                    {week.map((cell, ci) => {
-                      if (!cell.dateStr) return <div key={ci} />
-                      const evts = getMaintEvents(villa.id, cell.dateStr)
-                      if (evts.length === 0) return <div key={ci} />
-                      return (
-                        <div key={ci} className="flex items-center justify-center gap-0.5 overflow-hidden">
-                          {evts.slice(0, 3).map(evt => (
-                            <Link
-                              key={evt.id}
-                              href="/admin/maintenance"
-                              title={`${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
-                              className={`h-2 w-2 shrink-0 rounded-full ${MAINT_COLORS[evt.type]} hover:opacity-70 transition-opacity`}
-                            />
-                          ))}
-                          {evts.length > 3 && (
-                            <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
-                          )}
+                  {/* Maintenance dots row — only rendered if this villa has any events this week */}
+                  {(() => {
+                    const weekEvts = week.map(cell =>
+                      cell.dateStr ? getMaintEvents(villa.id, cell.dateStr) : []
+                    )
+                    const hasAny = weekEvts.some(e => e.length > 0)
+                    if (!hasAny) return null
+                    // Short villa name for label
+                    const shortName = villa.name
+                      .replace('Starfish House', 'SF')
+                      .replace('Cool House', 'CH')
+                      .replace('Water Edge', 'WE')
+                      .replace('Lower', 'L')
+                      .replace('Upper', 'U')
+                    const dotColor = color.replace('bg-', 'bg-').split(' ')[0]
+                    return (
+                      <div className="flex items-center h-4 mb-1 px-0.5 gap-1">
+                        {/* Villa colour tag */}
+                        <div className={`shrink-0 rounded px-1 text-[8px] font-bold text-white leading-4 ${dotColor}`}
+                          title={villa.name}>
+                          {shortName}
                         </div>
-                      )
-                    })}
-                  </div>
+                        {/* 7-col dots grid */}
+                        <div className="grid grid-cols-7 flex-1">
+                          {weekEvts.map((evts, ci) => {
+                            if (evts.length === 0) return <div key={ci} />
+                            return (
+                              <div key={ci} className="flex items-center justify-center gap-0.5 overflow-hidden">
+                                {evts.slice(0, 3).map(evt => (
+                                  <Link
+                                    key={evt.id}
+                                    href="/admin/maintenance"
+                                    title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
+                                    className={`h-2 w-2 shrink-0 rounded-full ${MAINT_COLORS[evt.type]} hover:opacity-70 transition-opacity`}
+                                  />
+                                ))}
+                                {evts.length > 3 && (
+                                  <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             })}
