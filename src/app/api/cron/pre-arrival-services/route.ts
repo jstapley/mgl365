@@ -84,7 +84,15 @@ export async function GET(req: NextRequest) {
 
   const supabase = getServiceSupabase()
   const today = antiguaToday()
+  const in1Day  = addDays(today, 1)
   const in7Days = addDays(today, 7)
+
+  // Lead times by villa type:
+  //   Starfish House Upper / Lower → 1 day before check-in
+  //   Cool House / Water Edge      → 7 days before check-in
+  function leadDaysForVilla(villaName: string): number {
+    return villaName.toLowerCase().includes('starfish') ? 1 : 7
+  }
 
   // Fetch the template
   const { data: tmpl, error: tmplError } = await supabase
@@ -99,11 +107,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Template not found or inactive' }, { status: 500 })
   }
 
-  // Find confirmed bookings checking in exactly 7 days from now that haven't been sent yet
+  // Fetch confirmed bookings checking in at either target date, not yet sent
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select('id, check_in, check_out, villas(name), clients(name, email)')
-    .eq('check_in', in7Days)
+    .in('check_in', [in1Day, in7Days])
     .eq('status', 'confirmed')
     .is('pre_arrival_sent_at', null)
 
@@ -116,7 +124,13 @@ export async function GET(req: NextRequest) {
 
   for (const booking of bookings ?? []) {
     const client = (booking as any).clients
-    const villaName = (booking as any).villas?.name ?? 'your villa'
+    const villaName = (booking as any).villas?.name ?? ''
+
+    // Skip if this booking's check-in doesn't match the lead time for its villa type
+    const expectedCheckIn = addDays(today, leadDaysForVilla(villaName))
+    if (booking.check_in !== expectedCheckIn) continue
+
+    const villaDisplay = villaName || 'your villa'
 
     if (!client?.email) {
       results.push({ id: booking.id, status: 'skipped: no client email' })
@@ -139,7 +153,7 @@ export async function GET(req: NextRequest) {
     const vars: Record<string, string> = {
       guest_name: client.name ?? '',
       guest_first_name: (client.name ?? '').split(' ')[0],
-      villa_name: villaName,
+      villa_name: villaDisplay,
       check_in: checkInFmt,
       check_out: checkOutFmt,
       services_html: servicesHtml,
@@ -168,7 +182,7 @@ export async function GET(req: NextRequest) {
       <div style="font-family: sans-serif; max-width: 600px; color: #333;">
         <div style="background: #1c4f6a; padding: 24px 32px; margin-bottom: 24px;">
           <p style="color: white; margin: 0; font-size: 18px; font-weight: 600;">MGL 365 Management</p>
-          <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaName}</p>
+          <p style="color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;">${villaDisplay}</p>
         </div>
         <div style="padding: 0 32px 32px;">
           ${bodyHtmlContent}
@@ -200,6 +214,6 @@ export async function GET(req: NextRequest) {
     console.log('[pre-arrival-cron] Sent pre-arrival email for booking', booking.id)
   }
 
-  console.log('[pre-arrival-cron]', JSON.stringify({ date: today, target_check_in: in7Days, results }))
-  return NextResponse.json({ date: today, target_check_in: in7Days, results })
+  console.log('[pre-arrival-cron]', JSON.stringify({ date: today, targets: { '7day': in7Days, '1day': in1Day }, results }))
+  return NextResponse.json({ date: today, targets: { '7day': in7Days, '1day': in1Day }, results })
 }
