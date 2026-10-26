@@ -27,12 +27,6 @@ function getColor(villaName: string, idx: number) {
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 
-// Maintenance event dot colours
-const MAINT_COLORS: Record<MaintenanceEvent['type'], string> = {
-  schedule_due: 'bg-amber-400',
-  schedule_log: 'bg-gray-300',
-  issue:        'bg-orange-500',
-}
 
 export default function CalendarViewMulti({ villas, bookings, maintenanceEvents }: Props) {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -238,42 +232,26 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                     )
                     const hasAny = weekEvts.some(e => e.length > 0)
                     if (!hasAny) return null
-                    // Short villa name for label
-                    const shortName = villa.name
-                      .replace('Starfish House', 'SF')
-                      .replace('Cool House', 'CH')
-                      .replace('Water Edge', 'WE')
-                      .replace('Lower', 'L')
-                      .replace('Upper', 'U')
-                    const dotColor = color.replace('bg-', 'bg-').split(' ')[0]
                     return (
-                      <div className="flex items-center h-4 mb-1 px-0.5 gap-1">
-                        {/* Villa colour tag */}
-                        <div className={`shrink-0 rounded px-1 text-[8px] font-bold text-white leading-4 ${dotColor}`}
-                          title={villa.name}>
-                          {shortName}
-                        </div>
-                        {/* 7-col dots grid */}
-                        <div className="grid grid-cols-7 flex-1">
-                          {weekEvts.map((evts, ci) => {
-                            if (evts.length === 0) return <div key={ci} />
-                            return (
-                              <div key={ci} className="flex items-center justify-center gap-0.5 overflow-hidden">
-                                {evts.slice(0, 3).map(evt => (
-                                  <Link
-                                    key={evt.id}
-                                    href={evt.href}
-                                    title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
-                                    className={`h-2 w-2 shrink-0 rounded-full ${MAINT_COLORS[evt.type]} hover:opacity-70 transition-opacity`}
-                                  />
-                                ))}
-                                {evts.length > 3 && (
-                                  <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
+                      <div className="grid grid-cols-7 h-5 mb-0.5">
+                        {weekEvts.map((evts, ci) => {
+                          if (evts.length === 0) return <div key={ci} />
+                          return (
+                            <div key={ci} className="flex items-center justify-center gap-0.5 overflow-hidden">
+                              {evts.slice(0, 3).map(evt => (
+                                <Link
+                                  key={evt.id}
+                                  href={evt.href}
+                                  title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
+                                  className={`h-3 w-3 shrink-0 rounded-full ${color} hover:opacity-70 transition-opacity`}
+                                />
+                              ))}
+                              {evts.length > 3 && (
+                                <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )
                   })()}
@@ -292,19 +270,9 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
             <span>{villa.name}</span>
           </div>
         ))}
-        <div className="ml-2 flex items-center gap-3 border-l border-gray-200 pl-3">
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-amber-400" />
-            <span>Maintenance due</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-orange-500" />
-            <span>Scheduled issue</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-gray-300" />
-            <span>Completed</span>
-          </div>
+        <div className="ml-2 flex items-center gap-1.5 border-l border-gray-200 pl-3">
+          <div className="h-3 w-3 rounded-full bg-gray-400" />
+          <span>Maintenance / issue dot</span>
         </div>
       </div>
     </div>
