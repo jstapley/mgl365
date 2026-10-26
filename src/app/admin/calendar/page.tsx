@@ -11,6 +11,7 @@ export interface MaintenanceEvent {
   assigned_to: string | null
   type: 'schedule_due' | 'schedule_log' | 'issue'
   href: string
+  complete: boolean     // true = show checkmark in dot
 }
 
 async function getData() {
@@ -26,7 +27,7 @@ async function getData() {
     supabase.from('bookings').select('*, client:clients(id, name)').order('check_in'),
     supabase.from('maintenance_schedules').select('id, villa_id, name, next_due').eq('active', true),
     supabase.from('maintenance_logs').select('id, schedule_id, completed_date, maintenance_schedules(villa_id, name)'),
-    supabase.from('maintenance_issues').select('id, villa_id, description, scheduled_date, assigned_to').not('scheduled_date', 'is', null),
+    supabase.from('maintenance_issues').select('id, villa_id, description, scheduled_date, assigned_to, resolved_at').not('scheduled_date', 'is', null),
   ])
 
   const events: MaintenanceEvent[] = []
@@ -42,6 +43,7 @@ async function getData() {
       assigned_to: null,
       type:        'schedule_due',
       href:        `/admin/maintenance/${s.id}`,
+      complete:    false,
     })
   }
 
@@ -56,6 +58,7 @@ async function getData() {
       assigned_to: null,
       type:        'schedule_log',
       href:        `/admin/maintenance/${l.schedule_id}`,
+      complete:    true,
     })
   }
 
@@ -69,6 +72,7 @@ async function getData() {
       assigned_to: i.assigned_to,
       type:        'issue',
       href:        `/admin/maintenance/issues/${i.id}`,
+      complete:    !!i.resolved_at,
     })
   }
 

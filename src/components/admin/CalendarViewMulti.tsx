@@ -233,7 +233,7 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                     const hasAny = weekEvts.some(e => e.length > 0)
                     if (!hasAny) return null
                     return (
-                      <div className="grid grid-cols-7 h-5 mb-0.5">
+                      <div className="grid grid-cols-7 h-6 mb-0.5">
                         {weekEvts.map((evts, ci) => {
                           if (evts.length === 0) return <div key={ci} />
                           return (
@@ -243,8 +243,14 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                                   key={evt.id}
                                   href={evt.href}
                                   title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
-                                  className={`h-4 w-4 shrink-0 rounded-full ${color} hover:opacity-70 transition-opacity`}
-                                />
+                                  className={`h-5 w-5 shrink-0 rounded-full ${color} hover:opacity-70 transition-opacity flex items-center justify-center`}
+                                >
+                                  {evt.complete && (
+                                    <svg viewBox="0 0 10 10" className="h-3 w-3 stroke-white fill-none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="2,5 4.5,7.5 8,3" />
+                                    </svg>
+                                  )}
+                                </Link>
                               ))}
                               {evts.length > 3 && (
                                 <span className="text-[9px] text-gray-400">+{evts.length - 3}</span>
@@ -271,7 +277,11 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
           </div>
         ))}
         <div className="ml-2 flex items-center gap-1.5 border-l border-gray-200 pl-3">
-          <div className="h-4 w-4 rounded-full bg-gray-400" />
+          <div className="h-5 w-5 rounded-full bg-gray-400 flex items-center justify-center">
+            <svg viewBox="0 0 10 10" className="h-3 w-3 stroke-white fill-none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="2,5 4.5,7.5 8,3" />
+            </svg>
+          </div>
           <span>Maintenance / issue dot</span>
         </div>
       </div>
