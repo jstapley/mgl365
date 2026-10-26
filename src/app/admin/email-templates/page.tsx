@@ -21,6 +21,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   onboarding_reminder_4wk:  'Onboarding Reminder — 4 Weeks Out',
   google_review:            'Google Review Request (Manual)',
   pre_arrival_week:         'Pre-Arrival Services Summary (7 Days Out)',
+  starfish_self_checkin:    'Starfish House Self Check-in (Manual)',
 }
 
 export default async function EmailTemplatesPage() {
