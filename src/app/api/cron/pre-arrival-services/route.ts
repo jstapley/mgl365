@@ -84,15 +84,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = getServiceSupabase()
   const today = antiguaToday()
-  const in1Day  = addDays(today, 1)
   const in7Days = addDays(today, 7)
-
-  // Lead times by villa type:
-  //   Starfish House Upper / Lower → 1 day before check-in
-  //   Cool House / Water Edge      → 7 days before check-in
-  function leadDaysForVilla(villaName: string): number {
-    return villaName.toLowerCase().includes('starfish') ? 1 : 7
-  }
 
   // Fetch the template
   const { data: tmpl, error: tmplError } = await supabase
@@ -107,11 +99,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Template not found or inactive' }, { status: 500 })
   }
 
-  // Fetch confirmed bookings checking in at either target date, not yet sent
+  // Find confirmed bookings checking in exactly 7 days from now that haven't been sent yet
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select('id, check_in, check_out, villas(name), clients(name, email)')
-    .in('check_in', [in1Day, in7Days])
+    .eq('check_in', in7Days)
     .eq('status', 'confirmed')
     .is('pre_arrival_sent_at', null)
 
@@ -124,13 +116,7 @@ export async function GET(req: NextRequest) {
 
   for (const booking of bookings ?? []) {
     const client = (booking as any).clients
-    const villaName = (booking as any).villas?.name ?? ''
-
-    // Skip if this booking's check-in doesn't match the lead time for its villa type
-    const expectedCheckIn = addDays(today, leadDaysForVilla(villaName))
-    if (booking.check_in !== expectedCheckIn) continue
-
-    const villaDisplay = villaName || 'your villa'
+    const villaDisplay = (booking as any).villas?.name ?? 'your villa'
 
     if (!client?.email) {
       results.push({ id: booking.id, status: 'skipped: no client email' })
@@ -214,6 +200,6 @@ export async function GET(req: NextRequest) {
     console.log('[pre-arrival-cron] Sent pre-arrival email for booking', booking.id)
   }
 
-  console.log('[pre-arrival-cron]', JSON.stringify({ date: today, targets: { '7day': in7Days, '1day': in1Day }, results }))
-  return NextResponse.json({ date: today, targets: { '7day': in7Days, '1day': in1Day }, results })
+  console.log('[pre-arrival-cron]', JSON.stringify({ date: today, target_check_in: in7Days, results }))
+  return NextResponse.json({ date: today, target_check_in: in7Days, results })
 }
