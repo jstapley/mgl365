@@ -243,7 +243,7 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
                                   key={evt.id}
                                   href={evt.href}
                                   title={`${villa.name} · ${evt.label}${evt.assigned_to ? ` · ${evt.assigned_to}` : ''}`}
-                                  className={`h-3 w-3 shrink-0 rounded-full ${color} hover:opacity-70 transition-opacity`}
+                                  className={`h-4 w-4 shrink-0 rounded-full ${color} hover:opacity-70 transition-opacity`}
                                 />
                               ))}
                               {evts.length > 3 && (
@@ -271,7 +271,7 @@ export default function CalendarViewMulti({ villas, bookings, maintenanceEvents 
           </div>
         ))}
         <div className="ml-2 flex items-center gap-1.5 border-l border-gray-200 pl-3">
-          <div className="h-3 w-3 rounded-full bg-gray-400" />
+          <div className="h-4 w-4 rounded-full bg-gray-400" />
           <span>Maintenance / issue dot</span>
         </div>
       </div>
