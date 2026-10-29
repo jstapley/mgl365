@@ -139,6 +139,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
 
   // Final step
   const [guestNotes, setGuestNotes] = useState('')
+  const [specialOccasion, setSpecialOccasion] = useState('')
 
   const client = booking.clients
   const villa = booking.villas
@@ -230,6 +231,7 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
         if (chefSpecialEventDesc) fd.append('chef_special_event_desc', chefSpecialEventDesc)
       }
       fd.append('guest_notes', guestNotes)
+      if (specialOccasion.trim()) fd.append('special_occasion', specialOccasion.trim())
       const result = await submitOnboarding(token, fd)
       if (result?.error) setSubmitError(result.error)
     })
@@ -728,19 +730,35 @@ export default function OnboardWizard({ token, booking, liabilityContent, activi
       {/* ── Final step: Notes + Submit ── */}
       {step === TOTAL_STEPS - 1 && (
         <div className="space-y-5">
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="mb-1 text-base font-semibold text-gray-900">Almost done!</h2>
-            <p className="mb-4 text-sm text-gray-500">
-              Is there anything else we should know? Dietary requirements, celebrations,
-              accessibility needs, or special requests.
-            </p>
-            <textarea
-              value={guestNotes}
-              onChange={(e) => setGuestNotes(e.target.value)}
-              rows={4}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
-              placeholder="Let us know anything that will help us prepare for your arrival…"
-            />
+          <div className="rounded-lg border border-gray-200 bg-white p-6 space-y-4">
+            <div>
+              <h2 className="mb-1 text-base font-semibold text-gray-900">Almost done!</h2>
+              <p className="text-sm text-gray-500">Just a couple of final questions to help us personalise your stay.</p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Are you celebrating a special occasion?
+              </label>
+              <p className="mb-2 text-xs text-gray-400">Birthday, anniversary, honeymoon, etc. Leave blank if not applicable.</p>
+              <input
+                type="text"
+                value={specialOccasion}
+                onChange={(e) => setSpecialOccasion(e.target.value)}
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+                placeholder="e.g. Birthday, Honeymoon, Anniversary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Anything else we should know?</label>
+              <p className="mb-2 text-xs text-gray-400">Dietary requirements, accessibility needs, or special requests.</p>
+              <textarea
+                value={guestNotes}
+                onChange={(e) => setGuestNotes(e.target.value)}
+                rows={4}
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+                placeholder="Let us know anything that will help us prepare for your arrival…"
+              />
+            </div>
           </div>
 
           <div className="flex gap-3">

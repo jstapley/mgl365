@@ -19,7 +19,7 @@ async function getClientBookings(clientId: string) {
   const [{ data: bookings }, { data: submissions }] = await Promise.all([
     supabase
       .from('bookings')
-      .select('id, check_in, check_out, status, total_amount, villa:villas(id, name)')
+      .select('id, check_in, check_out, status, total_amount, special_occasion, villa:villas(id, name)')
       .eq('client_id', clientId)
       .order('check_in', { ascending: false }),
     supabase
@@ -162,14 +162,19 @@ export default async function ClientDetailPage({
                         {b.total_amount != null && <> · ${b.total_amount.toLocaleString()}</>}
                       </p>
                       <div className="mt-1.5 flex items-center justify-between">
-                        {hasSubmission ? (
-                          <span className="flex items-center gap-1 text-xs text-green-600">
-                            <ClipboardList size={11} strokeWidth={2} />
-                            Onboarding submitted
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-400">No onboarding yet</span>
-                        )}
+                        <div className="flex flex-col gap-0.5">
+                          {hasSubmission ? (
+                            <span className="flex items-center gap-1 text-xs text-green-600">
+                              <ClipboardList size={11} strokeWidth={2} />
+                              Onboarding submitted
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">No onboarding yet</span>
+                          )}
+                          {b.special_occasion && (
+                            <span className="text-xs text-purple-600 font-medium">🎉 {b.special_occasion}</span>
+                          )}
+                        </div>
                         <span className="text-xs text-[#1f5772]">
                           {isSelected ? 'Viewing ↑' : 'View details →'}
                         </span>

@@ -13,7 +13,8 @@ interface Props {
 export default function EditBookingForm({ booking, villas, clients }: Props) {
   const boundAction = updateBooking.bind(null, booking.id)
   const [error, action, isPending] = useActionState(boundAction, null)
-  const [midstayRequired, setMidstayRequired] = useState(!!booking.midstay_clean_date)
+  const midstayCount = booking.midstay_clean_date_2 ? 2 : booking.midstay_clean_date ? 1 : 0
+  const [midstayRequired, setMidstayRequired] = useState(midstayCount)
 
   return (
     <>
@@ -84,17 +85,28 @@ export default function EditBookingForm({ booking, villas, clients }: Props) {
             <label className="mb-1 block text-xs font-medium text-gray-700">Mid-stay Clean</label>
             <select
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
-              value={midstayRequired ? 'yes' : 'no'}
-              onChange={e => setMidstayRequired(e.target.value === 'yes')}
+              value={String(midstayRequired)}
+              onChange={e => setMidstayRequired(Number(e.target.value))}
             >
-              <option value="no">Not required</option>
-              <option value="yes">Yes — select date</option>
+              <option value="0">Not required</option>
+              <option value="1">1 clean — select date</option>
+              <option value="2">2 cleans — select dates</option>
             </select>
-            {midstayRequired && (
+            {midstayRequired >= 1 && (
               <input
                 name="midstay_clean_date"
                 type="date"
                 defaultValue={booking.midstay_clean_date ?? ''}
+                placeholder="1st clean date"
+                className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
+              />
+            )}
+            {midstayRequired >= 2 && (
+              <input
+                name="midstay_clean_date_2"
+                type="date"
+                defaultValue={booking.midstay_clean_date_2 ?? ''}
+                placeholder="2nd clean date"
                 className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]"
               />
             )}
@@ -108,6 +120,11 @@ export default function EditBookingForm({ booking, villas, clients }: Props) {
             <option value="VRBO">VRBO</option>
             <option value="Airbnb">Airbnb</option>
           </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Special Occasion</label>
+          <input name="special_occasion" defaultValue={booking.special_occasion ?? ''} placeholder="e.g. Birthday, Honeymoon, Anniversary" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1f5772]" />
         </div>
 
         <div>

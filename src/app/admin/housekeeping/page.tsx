@@ -8,6 +8,7 @@ export interface BookingRow {
   check_out: string
   booking_type: 'guest' | 'owner'
   midstay_clean_date: string | null
+  midstay_clean_date_2: string | null
   status: string
 }
 
@@ -15,7 +16,7 @@ export default async function HousekeepingPage() {
   const supabase = getServiceSupabase()
   const { data } = await supabase
     .from('bookings')
-    .select('id, check_in, check_out, booking_type, midstay_clean_date, status, villa:villas(name)')
+    .select('id, check_in, check_out, booking_type, midstay_clean_date, midstay_clean_date_2, status, villa:villas(name)')
     .neq('status', 'cancelled')
     .order('check_in')
 
@@ -27,6 +28,7 @@ export default async function HousekeepingPage() {
       check_out: b.check_out,
       booking_type: b.booking_type ?? 'guest',
       midstay_clean_date: b.midstay_clean_date ?? null,
+      midstay_clean_date_2: b.midstay_clean_date_2 ?? null,
       status: b.status,
     }))
     .filter((b: BookingRow) => b.villa_name)

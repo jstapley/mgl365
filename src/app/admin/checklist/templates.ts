@@ -18,19 +18,19 @@ const COOL_HOUSE: InspectionTemplate = {
   sections: [
     {
       id: 'cisterns_propane',
-      title: 'Cisterns & Main Propane',
+      title: 'Cisterns',
       fields: [
         { type: 'measurement', id: 'cistern_s', label: 'Cistern S', unit: 'inches' },
         { type: 'measurement', id: 'cistern_m', label: 'Cistern M', unit: 'inches' },
         { type: 'measurement', id: 'cistern_n', label: 'Cistern N', unit: 'inches' },
         { type: 'radio', id: 'cistern_in_use', label: 'Cistern Currently in Use', options: ['S', 'M', 'N'] },
-        { type: 'measurement', id: 'main_propane', label: 'Main Propane – White Tank', unit: '%' },
       ],
     },
     {
       id: 'bbq_propane',
-      title: 'BBQ Propane',
+      title: 'Propane',
       fields: [
+        { type: 'measurement', id: 'main_propane', label: 'Main Propane – White Tank', unit: '%' },
         { type: 'checkbox_value', id: 'bbq_level', label: 'BBQ propane level', valueType: 'number', unit: '%' },
         { type: 'checkbox', id: 'two_full_tanks', label: '2 full tanks present' },
         { type: 'checkbox', id: 'one_tank_wioc', label: '1 Tank at WIOC' },

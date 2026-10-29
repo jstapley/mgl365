@@ -150,9 +150,15 @@ export async function submitOnboarding(token: string, formData: FormData): Promi
   }
 
   // Mark booking confirmed and record completion timestamp
+  const specialOccasion = (formData.get('special_occasion') as string)?.trim() || null
+
   const { error: statusError } = await supabase
     .from('bookings')
-    .update({ status: 'confirmed', onboarding_completed_at: new Date().toISOString() })
+    .update({
+      status: 'confirmed',
+      onboarding_completed_at: new Date().toISOString(),
+      ...(specialOccasion ? { special_occasion: specialOccasion } : {}),
+    })
     .eq('id', booking.id)
 
   if (statusError) {

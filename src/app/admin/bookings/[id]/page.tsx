@@ -10,6 +10,7 @@ import DeleteBookingButton from './DeleteBookingButton'
 import StatusButtons from './StatusButtons'
 import BookingServicesPanel from './BookingServicesPanel'
 import { getBookingServices } from './booking-services-actions'
+import CopyListButton from './CopyListButton'
 
 async function getBooking(id: string): Promise<Booking> {
   const supabase = getServiceSupabase()
@@ -47,7 +48,8 @@ async function getSubmission(bookingId: string) {
       interest_spa, interest_tours, interest_excursions, interest_wine,
       interest_transport, interest_chef, interest_provisioning,
       selected_activities, num_guests, arrival_flight, arrival_datetime,
-      departure_flight, departure_datetime, guest_notes
+      departure_flight, departure_datetime, guest_notes,
+      grocery_items, grocery_notes
     `)
     .eq('booking_id', bookingId)
     .single()
@@ -97,6 +99,15 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const interestCount = submission
     ? INTEREST_LABELS.filter(({ key }) => (submission as any)[key]).length
     : 0
+
+  // Build provisioning copy text
+  const groceryCopyText = (() => {
+    if (!submission) return ''
+    const items = ((submission as any).grocery_items as string | null)?.trim() || ''
+    const notes = ((submission as any).grocery_notes as string | null)?.trim() || ''
+    const parts = [items && `Items:\n${items}`, notes && `Notes:\n${notes}`].filter(Boolean)
+    return parts.join('\n\n')
+  })()
   const importableCount = selectedActivities.length + interestCount
 
   return (
@@ -254,6 +265,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                     <span className="text-xs text-gray-400">None selected</span>
                   )}
                 </div>
+                {groceryCopyText && (
+                  <div className="mt-2">
+                    <CopyListButton text={groceryCopyText} />
+                  </div>
+                )}
               </div>
 
               {/* Selected activities */}
@@ -280,6 +296,14 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Special occasion */}
+              {booking.special_occasion && (
+                <div>
+                  <p className="mb-1 text-xs font-semibold text-gray-500">Special Occasion</p>
+                  <p className="text-xs font-medium text-purple-700">🎉 {booking.special_occasion}</p>
                 </div>
               )}
 

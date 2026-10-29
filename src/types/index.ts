@@ -75,6 +75,8 @@ export interface Booking {
   status: BookingStatus
   booking_type: BookingType
   midstay_clean_date: string | null
+  midstay_clean_date_2: string | null
+  special_occasion: string | null
   booking_platform: string | null
   total_amount: number | null
   notes: string | null

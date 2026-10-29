@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
 import type { BookingRow } from './page'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ const SHORT_MONTHS = [
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const WHATSAPP_NUMBER = '12687726084'
+const WHATSAPP_NUMBER = '12687885675' // Jamie's number
 
 // Regular house cleanings: name → day of week (0=Sun, 1=Mon … 6=Sat)
 const REGULAR_HOUSES: { name: string; dayOfWeek: number }[] = [
@@ -85,6 +85,9 @@ function deriveTasks(bookings: BookingRow[], year: number, month: number): Task[
 
     if (b.midstay_clean_date && b.midstay_clean_date >= first && b.midstay_clean_date <= last) {
       tasks.push({ date: b.midstay_clean_date, villaName: v, type: 'midstay', bookingType: bt })
+    }
+    if (b.midstay_clean_date_2 && b.midstay_clean_date_2 >= first && b.midstay_clean_date_2 <= last) {
+      tasks.push({ date: b.midstay_clean_date_2, villaName: v, type: 'midstay', bookingType: bt })
     }
     if (b.check_in >= first && b.check_in <= last) {
       getEntry(b.check_in, v).checkin = bt
@@ -295,6 +298,7 @@ export default function HousekeepingClient({ bookings }: { bookings: BookingRow[
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [view, setView] = useState<'calendar' | 'list'>('calendar')
+  const [copied, setCopied] = useState(false)
 
   function prevMonth() {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
@@ -320,6 +324,14 @@ export default function HousekeepingClient({ bookings }: { bookings: BookingRow[
     const text = buildWhatsAppText(bookings, tasks, year, month)
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  function handleCopy() {
+    const text = buildWhatsAppText(bookings, tasks, year, month)
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   return (
@@ -383,14 +395,24 @@ export default function HousekeepingClient({ bookings }: { bookings: BookingRow[
             </button>
           </div>
           {tasks.length > 0 && (
-            <button
-              onClick={handleWhatsApp}
-              title="Send via WhatsApp"
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
-            >
-              <WhatsAppIcon size={20} />
-              <span className="text-xs font-medium">Send</span>
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleCopy}
+                title="Copy schedule text"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 transition-colors"
+              >
+                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                <span className="text-xs font-medium">{copied ? 'Copied' : 'Copy'}</span>
+              </button>
+              <button
+                onClick={handleWhatsApp}
+                title="Send via WhatsApp"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
+              >
+                <WhatsAppIcon size={20} />
+                <span className="text-xs font-medium">Send</span>
+              </button>
+            </div>
           )}
         </div>
 
