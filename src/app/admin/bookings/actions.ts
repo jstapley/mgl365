@@ -272,7 +272,7 @@ async function sendCompletedEmail(bookingId: string): Promise<string> {
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: 'MGL 365 Management <info@mgl365antigua.com>',
     to: client.email,
-    cc: ['mgl365management@gmail.com', 'jeff@stapleyinc.com'],
+    cc: 'mgl365management@gmail.com',
     replyTo: 'mgl365management@gmail.com',
     subject,
     html: bodyHtml,
