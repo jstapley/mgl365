@@ -57,16 +57,15 @@ export async function markComplete(id: string, formData: FormData) {
   const completedDate = formData.get('completed_date') as string
   const notes = (formData.get('notes') as string) || null
   const cost = formData.get('cost') ? Number(formData.get('cost')) : null
+  const reschedule = formData.get('reschedule') === 'true'
 
-  // Get the schedule to calculate next_due
+  // Get the schedule to calculate next_due if rescheduling
   const { data: schedule, error: fetchError } = await supabase
     .from('maintenance_schedules')
     .select('frequency_days')
     .eq('id', id)
     .single()
   if (fetchError || !schedule) throw new Error('Schedule not found')
-
-  const nextDue = computeNextDue(completedDate, schedule.frequency_days)
 
   // Log the completion
   const { error: logError } = await supabase.from('maintenance_logs').insert({
@@ -78,9 +77,12 @@ export async function markComplete(id: string, formData: FormData) {
   if (logError) throw new Error(logError.message)
 
   // Update the schedule
+  const updatePayload: Record<string, unknown> = { last_completed: completedDate }
+  if (reschedule) updatePayload.next_due = computeNextDue(completedDate, schedule.frequency_days)
+
   const { error: updateError } = await supabase
     .from('maintenance_schedules')
-    .update({ last_completed: completedDate, next_due: nextDue })
+    .update(updatePayload)
     .eq('id', id)
   if (updateError) throw new Error(updateError.message)
 

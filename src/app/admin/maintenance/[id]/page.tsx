@@ -85,13 +85,23 @@ export default async function MaintenanceDetailPage({ params }: { params: Promis
               <label className="mb-1 block text-xs font-medium text-gray-700">Cost (USD)</label>
               <input name="cost" type="number" step="0.01" min="0" className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-500" />
             </div>
-            <button type="submit" className="w-full rounded bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700">
-              ✓ Mark Complete & Reschedule
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div>
+                <button type="submit" name="reschedule" value="false"
+                  className="w-full rounded border border-green-600 bg-white py-2 text-sm font-medium text-green-700 hover:bg-green-50">
+                  ✓ Mark Complete
+                </button>
+                <p className="mt-1 text-[10px] text-gray-400 text-center">Logs completion only</p>
+              </div>
+              <div>
+                <button type="submit" name="reschedule" value="true"
+                  className="w-full rounded bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700">
+                  ✓ Complete & Reschedule
+                </button>
+                <p className="mt-1 text-[10px] text-gray-400 text-center">Sets next due +{schedule.frequency_days}d</p>
+              </div>
+            </div>
           </form>
-          <p className="mt-2 text-[10px] text-gray-400">
-            Next due will automatically be set to completed date + {schedule.frequency_days} days.
-          </p>
         </div>
 
         {/* Edit Schedule */}
