@@ -39,8 +39,11 @@ function sortBookings(list: Booking[]): Booking[] {
   })
 }
 
+const PAGE_SIZE = 20
+
 export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
 
   const q = query.trim().toLowerCase()
   const filtered = sortBookings(
@@ -54,6 +57,15 @@ export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
       : bookings
   )
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  function handleSearch(value: string) {
+    setQuery(value)
+    setPage(1)
+  }
+
   return (
     <>
       <div className="mb-4 relative max-w-sm">
@@ -61,7 +73,7 @@ export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
         <input
           type="text"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={e => handleSearch(e.target.value)}
           placeholder="Search by guest, villa or date…"
           className="w-full rounded border border-gray-300 pl-9 pr-3 py-2 text-sm outline-none focus:border-[#1f5772]"
         />
@@ -89,7 +101,7 @@ export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
                   </td>
                 </tr>
               )}
-              {filtered.map((b) => (
+              {paginated.map((b) => (
                 <tr key={b.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{b.client?.name ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{b.villa?.name ?? '—'}</td>
@@ -119,7 +131,7 @@ export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
             {query ? `No bookings matching "${query}".` : 'No bookings yet.'}
           </p>
         )}
-        {filtered.map((b) => (
+        {paginated.map((b) => (
           <Link key={b.id} href={`/admin/bookings/${b.id}`}
             className="block rounded border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50">
             <div className="flex items-start justify-between gap-2">
@@ -141,8 +153,45 @@ export default function BookingsClient({ bookings }: { bookings: Booking[] }) {
         ))}
       </div>
 
-      {query && filtered.length > 0 && (
-        <p className="mt-2 text-xs text-gray-400">{filtered.length} of {bookings.length} bookings</p>
+      {/* Pagination */}
+      {filtered.length > 0 && (
+        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+          <p>
+            {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} booking{filtered.length !== 1 ? 's' : ''}
+            {query ? ` matching "${query}"` : ''}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="rounded border border-gray-200 px-2.5 py-1 hover:bg-gray-50 disabled:opacity-40"
+              >
+                ←
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`rounded border px-2.5 py-1 ${
+                    p === currentPage
+                      ? 'border-[#1f5772] bg-[#1f5772] text-white'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded border border-gray-200 px-2.5 py-1 hover:bg-gray-50 disabled:opacity-40"
+              >
+                →
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </>
   )
