@@ -56,17 +56,62 @@ export async function updateBookingService(
   formData: FormData
 ): Promise<string | null> {
   const supabase = getServiceSupabase()
+
+  const service_name    = (formData.get('service_name') as string).trim()
+  const provider        = (formData.get('provider') as string)?.trim() || null
+  const service_date    = (formData.get('service_date') as string) || null
+  const service_time    = (formData.get('service_time') as string)?.trim() || null
+  const cost_usd        = formData.get('cost_usd') ? Number(formData.get('cost_usd')) : null
+  const cost_xcd        = formData.get('cost_xcd') ? Number(formData.get('cost_xcd')) : null
+  const pickup_location = (formData.get('pickup_location') as string)?.trim() || null
+  const notes           = (formData.get('notes') as string)?.trim() || null
+
   const { error } = await supabase.from('booking_services').update({
-    service_name:     (formData.get('service_name') as string).trim(),
-    provider:         (formData.get('provider') as string)?.trim() || null,
-    service_date:     (formData.get('service_date') as string) || null,
-    service_time:     (formData.get('service_time') as string)?.trim() || null,
-    cost_usd:         formData.get('cost_usd') ? Number(formData.get('cost_usd')) : null,
-    cost_xcd:         formData.get('cost_xcd') ? Number(formData.get('cost_xcd')) : null,
-    pickup_location:  (formData.get('pickup_location') as string)?.trim() || null,
-    notes:            (formData.get('notes') as string)?.trim() || null,
+    service_name, provider, service_date, service_time,
+    cost_usd, cost_xcd, pickup_location, notes,
   }).eq('id', id)
   if (error) return error.message
+
+  // Sync changes to any linked commission entry
+  const { data: entry } = await supabase
+    .from('commission_entries')
+    .select('id')
+    .eq('booking_service_id', id)
+    .single()
+
+  if (entry) {
+    const commissionUpdate: Record<string, unknown> = {
+      service_booked: service_name,
+      entry_date:     service_date,
+      commission_usd: cost_usd,
+      commission_xcd: cost_xcd,
+    }
+
+    // Resolve updated provider — only update provider_id if provider name is set
+    if (provider) {
+      const { data: providers } = await supabase
+        .from('commission_providers')
+        .select('id, name, sort_order')
+        .eq('active', true)
+      const matched = providers?.find(p => p.name.toLowerCase() === provider.toLowerCase())
+      if (matched) {
+        commissionUpdate.provider_id = matched.id
+      } else {
+        const maxSort = providers?.reduce((m, p) => Math.max(m, p.sort_order ?? 0), 0) ?? 0
+        const { data: newProvider, error: provErr } = await supabase
+          .from('commission_providers')
+          .insert({ name: provider, primary_service: service_name, sort_order: maxSort + 1, active: true })
+          .select('id')
+          .single()
+        if (provErr) return provErr.message
+        commissionUpdate.provider_id = newProvider.id
+      }
+    }
+
+    await supabase.from('commission_entries').update(commissionUpdate).eq('id', entry.id)
+    revalidatePath('/admin/commissions')
+  }
+
   revalidatePath(`/admin/bookings/${bookingId}`)
   return null
 }
